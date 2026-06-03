@@ -24,6 +24,16 @@ export default async function ContractorDetailPage({
   });
   if (!contractor) notFound();
 
+  // Workload: upcoming scheduled jobs that aren't finished, soonest first.
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const isOpen = (s: string) => s !== "COMPLETED" && s !== "CANCELLED";
+  const upcoming = contractor.jobs
+    .filter((j) => j.scheduledDate && j.scheduledDate >= today && isOpen(j.status))
+    .sort((a, b) => a.scheduledDate!.getTime() - b.scheduledDate!.getTime());
+  const openJobs = contractor.jobs.filter((j) => isOpen(j.status));
+  const nextJob = upcoming[0];
+
   async function onDelete() {
     "use server";
     await deleteContractor(id);
@@ -80,7 +90,50 @@ export default async function ContractorDetailPage({
           </Card>
         </div>
 
-        <div className="lg:col-span-2">
+        <div className="space-y-6 lg:col-span-2">
+          <div className="grid grid-cols-3 gap-4">
+            <Card className="px-5 py-4">
+              <p className="text-2xl font-semibold text-slate-800">{openJobs.length}</p>
+              <p className="text-xs text-slate-400">Open jobs</p>
+            </Card>
+            <Card className="px-5 py-4">
+              <p className="text-2xl font-semibold text-slate-800">{upcoming.length}</p>
+              <p className="text-xs text-slate-400">Scheduled ahead</p>
+            </Card>
+            <Card className="px-5 py-4">
+              <p className="text-2xl font-semibold text-slate-800">
+                {nextJob ? formatDate(nextJob.scheduledDate) : "—"}
+              </p>
+              <p className="text-xs text-slate-400">Next job</p>
+            </Card>
+          </div>
+
+          <Card>
+            <CardHeader title={`Scheduled workload (${upcoming.length})`} />
+            {upcoming.length === 0 ? (
+              <p className="px-5 py-6 text-sm text-slate-400">
+                No upcoming scheduled jobs.
+              </p>
+            ) : (
+              <ul className="divide-y divide-slate-100">
+                {upcoming.map((j) => (
+                  <li key={j.id} className="flex items-center gap-4 px-5 py-3 text-sm">
+                    <div className="w-28 shrink-0 font-medium text-slate-700">
+                      {formatDate(j.scheduledDate)}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <Link href={`/jobs/${j.id}`} className="text-brand-700 hover:underline">
+                        {j.title}
+                      </Link>
+                      <span className="ml-2 text-slate-400">{j.client.name}</span>
+                    </div>
+                    <StatusBadge value={j.status} />
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+
           <Card>
             <CardHeader title={`Job history (${contractor.jobs.length})`} />
             {contractor.jobs.length === 0 ? (
