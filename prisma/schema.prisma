@@ -1,0 +1,179 @@
+// Homefix CRM — Prisma schema
+// Run `npm run db:migrate` to apply changes locally.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  STAFF
+}
+
+enum ClientType {
+  RESIDENTIAL
+  COMMERCIAL
+}
+
+enum JobStatus {
+  ENQUIRY
+  QUOTED
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum CommunicationType {
+  CALL
+  EMAIL
+  NOTE
+  SITE_VISIT
+}
+
+enum InvoiceType {
+  QUOTE
+  INVOICE
+}
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  PAID
+  OVERDUE
+  VOID
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(STAFF)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  assignedJobs   Job[]           @relation("JobAssignee")
+  communications Communication[] @relation("CommunicationAuthor")
+}
+
+model Client {
+  id           String     @id @default(cuid())
+  name         String
+  type         ClientType @default(RESIDENTIAL)
+  email        String?
+  phone        String?
+  addressLine1 String?
+  addressLine2 String?
+  town         String?
+  postcode     String?
+  notes        String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  jobs           Job[]
+  communications Communication[]
+  invoices       Invoice[]
+
+  @@index([name])
+}
+
+model Job {
+  id            String    @id @default(cuid())
+  reference     Int       @unique @default(autoincrement())
+  clientId      String
+  client        Client    @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  title         String
+  description   String?
+  status        JobStatus @default(ENQUIRY)
+  siteAddress   String?
+  scheduledDate DateTime?
+  assignedToId  String?
+  assignedTo    User?     @relation("JobAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  communications Communication[]
+  invoices       Invoice[]
+
+  @@index([clientId])
+  @@index([status])
+}
+
+model Communication {
+  id          String            @id @default(cuid())
+  clientId    String
+  client      Client            @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  jobId       String?
+  job         Job?              @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  type        CommunicationType @default(NOTE)
+  body        String
+  createdById String
+  createdBy   User              @relation("CommunicationAuthor", fields: [createdById], references: [id])
+  createdAt   DateTime          @default(now())
+
+  @@index([clientId])
+  @@index([jobId])
+}
+
+model Invoice {
+  id        String        @id @default(cuid())
+  type      InvoiceType   @default(INVOICE)
+  number    Int
+  clientId  String
+  client    Client        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  jobId     String?
+  job       Job?          @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  status    InvoiceStatus @default(DRAFT)
+  issueDate DateTime      @default(now())
+  dueDate   DateTime?
+  vatRate   Decimal       @default(20) @db.Decimal(5, 2)
+  subtotal  Decimal       @default(0) @db.Decimal(10, 2)
+  vatAmount Decimal       @default(0) @db.Decimal(10, 2)
+  total     Decimal       @default(0) @db.Decimal(10, 2)
+  notes     String?
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  lineItems InvoiceLineItem[]
+
+  @@unique([type, number])
+  @@index([clientId])
+  @@index([status])
+}
+
+model InvoiceLineItem {
+  id          String  @id @default(cuid())
+  invoiceId   String
+  invoice     Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  description String
+  quantity    Decimal @default(1) @db.Decimal(10, 2)
+  unitPrice   Decimal @default(0) @db.Decimal(10, 2)
+  lineTotal   Decimal @default(0) @db.Decimal(10, 2)
+  position    Int     @default(0)
+
+  @@index([invoiceId])
+}
+
+// Single-row table (id = 1) holding company details for invoice/quote branding.
+model CompanySettings {
+  id             Int      @id @default(1)
+  companyName    String   @default("Homefix Limited")
+  addressLine1   String?
+  addressLine2   String?
+  town           String?
+  postcode       String?
+  phone          String?
+  email          String?
+  vatNumber      String?
+  defaultVatRate Decimal  @default(20) @db.Decimal(5, 2)
+  invoicePrefix  String   @default("INV")
+  quotePrefix    String   @default("QUO")
+  updatedAt      DateTime @updatedAt
+}
