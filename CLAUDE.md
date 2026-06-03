@@ -20,6 +20,10 @@ PostgreSQL · Auth.js v5 (credentials) · @react-pdf/renderer.
 - Money is `Prisma.Decimal` in the DB; convert with `toNumber` from
   `lib/format.ts`. Invoice maths lives in `lib/invoice.ts` — keep it the single
   source of truth.
+- **Data import**: CSV client-import logic is pure in `lib/import.ts`
+  (`planClientImport`); AI extraction of PDF/Word quotes is in `lib/extraction.ts`
+  (Anthropic SDK, structured outputs, `claude-opus-4-8`). Keep the pure
+  mapping/dedup helpers separate from the I/O so they stay unit-testable.
 
 ## Local dev
 `docker compose up -d` (or any Postgres) → `npm run db:migrate` → `npm run db:seed`

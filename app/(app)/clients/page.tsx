@@ -33,7 +33,14 @@ export default async function ClientsPage({
       <PageHeader
         title="Clients"
         subtitle="Everyone you work for, residential and commercial."
-        action={<LinkButton href="/clients/new">New client</LinkButton>}
+        action={
+          <div className="flex gap-2">
+            <LinkButton href="/clients/import" variant="secondary">
+              Import
+            </LinkButton>
+            <LinkButton href="/clients/new">New client</LinkButton>
+          </div>
+        }
       />
 
       <ListFilters

@@ -71,7 +71,14 @@ for (const [path, needle] of [
 }
 
 // 5. Form pages render
-for (const path of ["/clients/new", "/jobs/new", "/invoices/new", "/settings"]) {
+for (const path of [
+  "/clients/new",
+  "/clients/import",
+  "/jobs/new",
+  "/invoices/new",
+  "/invoices/import",
+  "/settings",
+]) {
   const r = await req(path);
   assert(r.status === 200, `${path} renders`);
 }

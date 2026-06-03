@@ -10,6 +10,13 @@ import {
   type ClientInput,
   type CommunicationInput,
 } from "@/lib/validation";
+import {
+  planClientImport,
+  type ImportClientRow,
+  type ImportResult,
+} from "@/lib/import";
+
+export type { ImportClientRow, ImportResult } from "@/lib/import";
 
 export type SaveResult = { ok: boolean; id?: string; error?: string };
 
@@ -75,4 +82,27 @@ export async function addCommunication(input: CommunicationInput): Promise<SaveR
   revalidatePath(`/clients/${d.clientId}`);
   if (d.jobId) revalidatePath(`/jobs/${d.jobId}`);
   return { ok: true };
+}
+
+/* ----------------------------- CSV import ----------------------------- */
+
+/**
+ * Bulk-create clients from mapped spreadsheet rows. De-duplication and
+ * normalisation live in `planClientImport` (lib/import.ts) so they can be
+ * unit-tested independently of the database.
+ */
+export async function importClients(rows: ImportClientRow[]): Promise<ImportResult> {
+  await requireUser();
+
+  const existing = await prisma.client.findMany({
+    select: { name: true, email: true, phone: true },
+  });
+  const { toCreate, skipped } = planClientImport(existing, rows);
+
+  if (toCreate.length) {
+    await prisma.client.createMany({ data: toCreate });
+  }
+
+  revalidatePath("/clients");
+  return { created: toCreate.length, skipped, total: rows.length };
 }

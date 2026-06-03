@@ -34,7 +34,14 @@ export default async function InvoicesPage({
       <PageHeader
         title="Invoices & quotes"
         subtitle="Create, track and export branded documents."
-        action={<LinkButton href="/invoices/new">New document</LinkButton>}
+        action={
+          <div className="flex gap-2">
+            <LinkButton href="/invoices/import" variant="secondary">
+              Import from PDF/Word
+            </LinkButton>
+            <LinkButton href="/invoices/new">New document</LinkButton>
+          </div>
+        }
       />
 
       <ListFilters

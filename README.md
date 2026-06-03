@@ -10,6 +10,9 @@ needs day to day:
 - **Client communication** — log calls, emails, notes and site visits against each
   client (and optionally a specific job), and see all of a client's jobs and invoices
   in one place.
+- **Data migration** — bulk-import clients from a spreadsheet (CSV) with column
+  mapping and de-duplication, and turn existing PDF/Word quotes & invoices into live
+  records with AI extraction.
 
 ## Tech stack
 
@@ -38,6 +41,8 @@ needs day to day:
 cp .env.example .env
 # then edit .env — set AUTH_SECRET to a long random string:
 #   openssl rand -base64 32
+# Optional: set ANTHROPIC_API_KEY to enable AI extraction of quotes/invoices
+# from PDFs and Word docs (see "Migrating existing data" below).
 ```
 
 ### 3. Install, migrate, seed
@@ -57,6 +62,21 @@ npm run dev
 Open http://localhost:3000 and sign in with the seeded account:
 
 > **admin@homefixlimited.co.uk** / **password123**
+
+## Migrating existing data
+
+Two tools help bring across data that currently lives in spreadsheets, Word docs and PDFs:
+
+- **Clients from a spreadsheet** (`Clients → Import`). Export your customer list to
+  CSV (Excel/Sheets → *Save As / Download → CSV*), upload it, map your columns to the
+  fields, preview, and import. Rows are de-duplicated against existing clients by name,
+  email or phone, so re-running an import is safe.
+- **Quotes & invoices from PDF/Word** (`Invoices → Import from PDF/Word`). Upload an
+  existing PDF, Word (`.docx`) or image; Claude extracts the client, line items, VAT
+  and totals and creates a **draft** you review on the normal edit screen before saving
+  as a live record. Requires `ANTHROPIC_API_KEY` to be set (the feature shows a clear
+  message if it isn't). Always check the figures against the original — AI can misread
+  messy scans. For old `.doc` files, save them as PDF first.
 
 ## Useful scripts
 
