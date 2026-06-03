@@ -65,12 +65,14 @@ export function CalendarBoard({
   jobsByDay,
   unscheduled,
   availabilityByDay,
+  offByDay,
 }: {
   view: CalendarView;
   days: CalendarDay[];
   jobsByDay: Record<string, CalendarJob[]>;
   unscheduled: CalendarJob[];
   availabilityByDay?: Record<string, "off" | "unmarked" | "available">;
+  offByDay?: Record<string, { count: number; names: string[] }>;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -121,6 +123,7 @@ export function CalendarBoard({
             const dayJobs = jobsByDay[day.key] ?? [];
             const isOver = over === day.key;
             const avail = availabilityByDay?.[day.key];
+            const off = offByDay?.[day.key];
             const cellBg =
               avail === "off"
                 ? "bg-red-50"
@@ -155,6 +158,14 @@ export function CalendarBoard({
                   {avail === "off" && (
                     <span className="ml-auto text-[10px] font-medium uppercase tracking-wide text-red-600">
                       Off
+                    </span>
+                  )}
+                  {off && (
+                    <span
+                      title={`Time off: ${off.names.join(", ")}`}
+                      className="ml-auto inline-flex rounded-full bg-amber-100 px-1.5 text-[10px] font-medium text-amber-800"
+                    >
+                      {off.count} off
                     </span>
                   )}
                 </div>

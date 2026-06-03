@@ -103,6 +103,29 @@ export default async function CalendarPage({
     isToday: isToday(d),
   }));
 
+  // All-contractors view: a per-day count of who's on time off.
+  let offByDay: Record<string, { count: number; names: string[] }> | undefined;
+  if (!contractor) {
+    const offWindows = await prisma.contractorAvailability.findMany({
+      where: { kind: "TIME_OFF", startDate: { lte: gridEnd }, endDate: { gte: gridStart } },
+      select: { startDate: true, endDate: true, contractor: { select: { name: true } } },
+    });
+    if (offWindows.length > 0) {
+      offByDay = {};
+      for (const d of days) {
+        const k = dayKey(d);
+        const names = [
+          ...new Set(
+            offWindows
+              .filter((w) => dayKey(w.startDate) <= k && k <= dayKey(w.endDate))
+              .map((w) => w.contractor.name)
+          ),
+        ];
+        if (names.length) offByDay[k] = { count: names.length, names };
+      }
+    }
+  }
+
   // When filtered to one contractor, shade days by their availability.
   let availabilityByDay: Record<string, "off" | "unmarked" | "available"> | undefined;
   let selectedContractorName: string | undefined;
@@ -205,13 +228,21 @@ export default async function CalendarPage({
       </div>
 
       {contractors.length > 0 && (
-        <div className="mb-4 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
+        <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
           {contractors.map((c, i) => (
             <span key={c.id} className="inline-flex items-center gap-1.5">
               <span className={`h-2 w-2 rounded-full ${contractorColor(i)}`} />
               {c.name}
             </span>
           ))}
+          {offByDay && (
+            <span className="inline-flex items-center gap-1.5">
+              <span className="inline-flex rounded-full bg-amber-100 px-1.5 text-[10px] font-medium text-amber-800">
+                N off
+              </span>
+              contractors on time off (hover for names)
+            </span>
+          )}
         </div>
       )}
 
@@ -239,6 +270,7 @@ export default async function CalendarPage({
         jobsByDay={jobsByDay}
         unscheduled={unscheduledJobs.map(toChip)}
         availabilityByDay={availabilityByDay}
+        offByDay={offByDay}
       />
     </div>
   );
