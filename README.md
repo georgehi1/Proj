@@ -1,4 +1,4 @@
-# Property Maintenance CRM
+# CRM
 
 A simple, easy-to-use CRM for a small property-maintenance & renovation company.
 It covers the three things the office needs day to day:
