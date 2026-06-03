@@ -1,7 +1,7 @@
-#  CRM
+# Property Maintenance CRM
 
-A simple, easy-to-use CRM for ****, a . It covers the three things the office
-needs day to day:
+A simple, easy-to-use CRM for a small property-maintenance & renovation company.
+It covers the three things the office needs day to day:
 
 - **Job management** — track work from enquiry → quoted → scheduled → in progress → completed.
 - **Invoicing** — build quotes & invoices with line items and VAT, track payment
@@ -58,9 +58,9 @@ npm run db:seed         # create the admin user + demo data
 npm run dev
 ```
 
-Open http://localhost:3000 and sign in with the seeded account:
-
-> **** / **password123**
+Open http://localhost:3000 and sign in with the seeded admin account — its
+credentials come from `ADMIN_EMAIL` / `ADMIN_PASSWORD` in your `.env` (the
+defaults are fine for local development).
 
 ## Migrating existing data
 
@@ -138,7 +138,7 @@ the migrations automatically on deploy (`vercel.json` sets the build command to
 > connection limits, but Prisma migrations need a direct connection — hence
 > `DATABASE_URL` (pooled) and `DIRECT_URL` (direct).
 
-## Not included in v1 (natural next steps)
+## Not included yet (natural next steps)
 
-Outbound email/SMS, online card payments, a customer portal, photo attachments on
-jobs, a calendar view, and reporting/exports.
+Outbound email/SMS, online card payments, a customer portal, and
+reporting/exports. (Job photo attachments and a calendar view are already built.)
