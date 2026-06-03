@@ -1,8 +1,11 @@
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { PageHeader } from "@/components/ui";
+import { currentUser, isAdmin } from "@/lib/session";
 import { SettingsForm } from "./SettingsForm";
 
 export default async function SettingsPage() {
+  if (!isAdmin(await currentUser())) redirect("/");
   const settings = await prisma.companySettings.findUnique({ where: { id: 1 } });
 
   return (

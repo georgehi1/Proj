@@ -9,6 +9,7 @@ import {
 } from "@/components/ui";
 import { StatusBadge } from "@/components/StatusBadge";
 import { ConfirmButton } from "@/components/ConfirmButton";
+import { currentUser, isAdmin } from "@/lib/session";
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/format";
 import { deleteJob } from "../actions";
 import { JobStatusControl } from "./JobStatusControl";
@@ -21,6 +22,7 @@ export default async function JobDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const admin = isAdmin(await currentUser());
   const job = await prisma.job.findUnique({
     where: { id },
     include: {
@@ -59,7 +61,9 @@ export default async function JobDetailPage({
             <LinkButton href={`/jobs/${job.id}/edit`} variant="secondary">
               Edit
             </LinkButton>
-            <ConfirmButton action={onDelete} confirmMessage={`Delete "${job.title}"?`} />
+            {admin && (
+              <ConfirmButton action={onDelete} confirmMessage={`Delete "${job.title}"?`} />
+            )}
           </div>
         }
       />

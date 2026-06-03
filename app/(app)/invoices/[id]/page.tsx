@@ -5,6 +5,7 @@ import { Card, CardHeader, LinkButton, PageHeader } from "@/components/ui";
 import { StatusBadge } from "@/components/StatusBadge";
 import { ConfirmButton } from "@/components/ConfirmButton";
 import { Button } from "@/components/ui";
+import { currentUser, isAdmin } from "@/lib/session";
 import { formatCurrency, formatDate, humanize } from "@/lib/format";
 import { convertQuoteToInvoice, deleteInvoice } from "../actions";
 import { InvoiceStatusControl } from "./InvoiceStatusControl";
@@ -15,6 +16,7 @@ export default async function InvoiceDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const admin = isAdmin(await currentUser());
   const invoice = await prisma.invoice.findUnique({
     where: { id },
     include: {
@@ -50,7 +52,9 @@ export default async function InvoiceDetailPage({
             <LinkButton href={`/invoices/${invoice.id}/edit`} variant="secondary">
               Edit
             </LinkButton>
-            <ConfirmButton action={onDelete} confirmMessage={`Delete ${label} #${invoice.number}?`} />
+            {admin && (
+              <ConfirmButton action={onDelete} confirmMessage={`Delete ${label} #${invoice.number}?`} />
+            )}
           </div>
         }
       />

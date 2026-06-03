@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/session";
+import { requireUser, requireRole } from "@/lib/session";
 import {
   clientSchema,
   communicationSchema,
@@ -57,7 +57,7 @@ export async function saveClient(
 }
 
 export async function deleteClient(id: string) {
-  await requireUser();
+  await requireRole("ADMIN");
   await prisma.client.delete({ where: { id } });
   revalidatePath("/clients");
   redirect("/clients");

@@ -1,10 +1,13 @@
 "use server";
 
+import { randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/session";
+import { requireUser, requireRole } from "@/lib/session";
 import { jobSchema, type JobInput } from "@/lib/validation";
+import { attachmentRejectReason } from "@/lib/attachments";
+import { storageEnabled, putObject, deleteObject } from "@/lib/storage";
 import type { JobStatus } from "@prisma/client";
 
 export type SaveResult = { ok: boolean; id?: string; error?: string };
@@ -72,7 +75,7 @@ export async function updateJobStatus(id: string, status: JobStatus) {
 }
 
 export async function deleteJob(id: string) {
-  await requireUser();
+  await requireRole("ADMIN");
   const job = await prisma.job.delete({ where: { id } });
   revalidatePath("/jobs");
   revalidatePath(`/clients/${job.clientId}`);
@@ -126,8 +129,6 @@ export async function deleteJobPhoto(photoId: string) {
   revalidatePath(`/jobs/${photo.jobId}`);
 }
 
-const MAX_ATTACHMENT_BYTES = 12 * 1024 * 1024; // 12MB
-
 export async function uploadJobAttachments(
   jobId: string,
   formData: FormData
@@ -142,23 +143,31 @@ export async function uploadJobAttachments(
     return { ok: false, error: "Please choose at least one file." };
   }
   for (const file of files) {
-    if (file.size > MAX_ATTACHMENT_BYTES) {
-      return { ok: false, error: `"${file.name}" is larger than 12MB.` };
-    }
+    const reason = attachmentRejectReason(file.name, file.size);
+    if (reason) return { ok: false, error: reason };
   }
 
-  const attachments = await Promise.all(
-    files.map(async (file) => ({
-      jobId,
-      filename: file.name,
-      mimeType: file.type || "application/octet-stream",
-      size: file.size,
-      data: Buffer.from(await file.arrayBuffer()),
-      uploadedById: user.id,
-    }))
+  const rows = await Promise.all(
+    files.map(async (file) => {
+      const bytes = Buffer.from(await file.arrayBuffer());
+      const mimeType = file.type || "application/octet-stream";
+      const base = {
+        jobId,
+        filename: file.name,
+        mimeType,
+        size: file.size,
+        uploadedById: user.id,
+      };
+      if (storageEnabled) {
+        const key = `jobs/${jobId}/${randomUUID()}-${file.name}`;
+        await putObject(key, bytes, mimeType);
+        return { ...base, storageKey: key, data: null };
+      }
+      return { ...base, data: bytes, storageKey: null };
+    })
   );
 
-  await prisma.jobAttachment.createMany({ data: attachments });
+  await prisma.jobAttachment.createMany({ data: rows });
 
   revalidatePath(`/jobs/${jobId}`);
   return { ok: true, id: jobId };
@@ -167,5 +176,6 @@ export async function uploadJobAttachments(
 export async function deleteJobAttachment(attachmentId: string) {
   await requireUser();
   const attachment = await prisma.jobAttachment.delete({ where: { id: attachmentId } });
+  if (attachment.storageKey) await deleteObject(attachment.storageKey);
   revalidatePath(`/jobs/${attachment.jobId}`);
 }

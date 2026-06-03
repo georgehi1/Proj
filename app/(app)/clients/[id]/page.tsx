@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { Card, CardHeader, LinkButton, PageHeader } from "@/components/ui";
 import { StatusBadge } from "@/components/StatusBadge";
 import { ConfirmButton } from "@/components/ConfirmButton";
+import { currentUser, isAdmin } from "@/lib/session";
 import { formatCurrency, formatDateTime, humanize } from "@/lib/format";
 import { deleteClient } from "../actions";
 import { AddCommunicationForm } from "./AddCommunicationForm";
@@ -14,6 +15,7 @@ export default async function ClientDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const admin = isAdmin(await currentUser());
   const client = await prisma.client.findUnique({
     where: { id },
     include: {
@@ -49,11 +51,13 @@ export default async function ClientDetailPage({
             <LinkButton href={`/clients/${client.id}/edit`} variant="secondary">
               Edit
             </LinkButton>
-            <ConfirmButton
-              action={onDelete}
-              label="Delete"
-              confirmMessage={`Delete ${client.name}? This removes their jobs, invoices and communication history.`}
-            />
+            {admin && (
+              <ConfirmButton
+                action={onDelete}
+                label="Delete"
+                confirmMessage={`Delete ${client.name}? This removes their jobs, invoices and communication history.`}
+              />
+            )}
           </div>
         }
       />

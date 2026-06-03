@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { getObject } from "@/lib/storage";
 
 export const runtime = "nodejs";
 
@@ -21,10 +22,25 @@ export async function GET(
     return new Response("Not found", { status: 404 });
   }
 
-  return new Response(new Uint8Array(attachment.data), {
+  // Bytes come either from object storage (proxied through this authed route,
+  // so storage URLs are never exposed) or from the DB fallback column.
+  let bytes: Uint8Array;
+  if (attachment.storageKey) {
+    try {
+      bytes = await getObject(attachment.storageKey);
+    } catch {
+      return new Response("File unavailable", { status: 502 });
+    }
+  } else if (attachment.data) {
+    bytes = attachment.data;
+  } else {
+    return new Response("File unavailable", { status: 404 });
+  }
+
+  return new Response(new Uint8Array(bytes), {
     headers: {
       "Content-Type": attachment.mimeType,
-      "Content-Length": String(attachment.size),
+      "Content-Length": String(bytes.length),
       "Cache-Control": "private, max-age=3600",
       "Content-Disposition": `attachment; filename="${attachment.filename}"`,
     },

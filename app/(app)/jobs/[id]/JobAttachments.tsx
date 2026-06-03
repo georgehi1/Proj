@@ -95,7 +95,8 @@ export function JobAttachments({
       </form>
       {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
       <p className="mt-2 text-xs text-slate-400">
-        Any file type — certificates, plans, signed quotes. Up to 12MB each.
+        PDFs, images, Office docs, CSV or text — certificates, plans, signed quotes.
+        Up to 12MB each.
       </p>
     </div>
   );

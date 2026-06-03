@@ -58,6 +58,7 @@ model User {
   email        String   @unique
   passwordHash String
   role         Role     @default(STAFF)
+  tokenVersion Int      @default(0)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -231,12 +232,25 @@ model JobAttachment {
   filename     String
   mimeType     String
   size         Int
-  data         Bytes
+  // Exactly one of `data` (bytes in-DB) or `storageKey` (object storage) is set.
+  data         Bytes?
+  storageKey   String?
   uploadedById String?
   uploadedBy   User?    @relation("AttachmentUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
   createdAt    DateTime @default(now())
 
   @@index([jobId])
+}
+
+// One row per failed login, used to rate-limit / lock out brute-force attempts.
+// Rows age out of the lockout window and are pruned opportunistically.
+model LoginAttempt {
+  id        String   @id @default(cuid())
+  email     String
+  ip        String?
+  createdAt DateTime @default(now())
+
+  @@index([email, createdAt])
 }
 
 // Single-row table (id = 1) holding company details for invoice/quote branding.

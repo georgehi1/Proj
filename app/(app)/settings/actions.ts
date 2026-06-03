@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/session";
+import { requireRole } from "@/lib/session";
 import { settingsSchema, type SettingsInput } from "@/lib/validation";
 
 export type SaveResult = { ok: boolean; error?: string };
@@ -14,7 +14,7 @@ function clean(value?: string) {
 }
 
 export async function saveSettings(input: SettingsInput): Promise<SaveResult> {
-  await requireUser();
+  await requireRole("ADMIN");
   const parsed = settingsSchema.safeParse(input);
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid data" };

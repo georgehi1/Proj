@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/session";
+import { requireUser, requireRole } from "@/lib/session";
 import {
   contractorSchema,
   availabilitySchema,
@@ -53,7 +53,7 @@ export async function saveContractor(
 }
 
 export async function deleteContractor(id: string) {
-  await requireUser();
+  await requireRole("ADMIN");
   await prisma.contractor.delete({ where: { id } });
   revalidatePath("/contractors");
   redirect("/contractors");

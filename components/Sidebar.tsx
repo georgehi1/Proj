@@ -10,7 +10,7 @@ const nav = [
   { href: "/clients", label: "Clients" },
   { href: "/contractors", label: "Contractors" },
   { href: "/invoices", label: "Invoices & quotes" },
-  { href: "/settings", label: "Settings" },
+  { href: "/settings", label: "Settings", adminOnly: true },
 ];
 
 function isActive(pathname: string, href: string) {
@@ -21,13 +21,18 @@ function isActive(pathname: string, href: string) {
 export function Sidebar({
   userName,
   userEmail,
+  isAdmin,
   signOut,
+  signOutEverywhere,
 }: {
   userName: string;
   userEmail: string;
+  isAdmin: boolean;
   signOut: () => Promise<void>;
+  signOutEverywhere: () => Promise<void>;
 }) {
   const pathname = usePathname();
+  const items = nav.filter((item) => isAdmin || !item.adminOnly);
 
   return (
     <aside className="flex w-60 shrink-0 flex-col border-r border-slate-200 bg-white">
@@ -42,7 +47,7 @@ export function Sidebar({
       </div>
 
       <nav className="flex-1 space-y-1 px-3">
-        {nav.map((item) => (
+        {items.map((item) => (
           <Link
             key={item.href}
             href={item.href}
@@ -66,6 +71,15 @@ export function Sidebar({
             className="w-full rounded-lg border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50"
           >
             Sign out
+          </button>
+        </form>
+        <form action={signOutEverywhere} className="mt-2">
+          <button
+            type="submit"
+            className="w-full rounded-lg px-3 py-1.5 text-xs font-medium text-slate-400 hover:text-slate-600"
+            title="Ends every session for your account on all devices"
+          >
+            Sign out of all devices
           </button>
         </form>
       </div>

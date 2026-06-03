@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { Card, CardHeader, LinkButton, PageHeader } from "@/components/ui";
 import { StatusBadge } from "@/components/StatusBadge";
 import { ConfirmButton } from "@/components/ConfirmButton";
+import { currentUser, isAdmin } from "@/lib/session";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { deleteContractor } from "../actions";
 import { AvailabilityManager } from "./AvailabilityManager";
@@ -14,6 +15,7 @@ export default async function ContractorDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const admin = isAdmin(await currentUser());
   const contractor = await prisma.contractor.findUnique({
     where: { id },
     include: {
@@ -63,10 +65,12 @@ export default async function ContractorDetailPage({
             <LinkButton href={`/contractors/${contractor.id}/edit`} variant="secondary">
               Edit
             </LinkButton>
-            <ConfirmButton
-              action={onDelete}
-              confirmMessage={`Delete ${contractor.name}? They'll be removed from any jobs they're on.`}
-            />
+            {admin && (
+              <ConfirmButton
+                action={onDelete}
+                confirmMessage={`Delete ${contractor.name}? They'll be removed from any jobs they're on.`}
+              />
+            )}
           </div>
         }
       />

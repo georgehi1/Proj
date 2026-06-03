@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/session";
+import { requireUser, requireRole } from "@/lib/session";
 import { invoiceSchema, type InvoiceInput } from "@/lib/validation";
 import { computeTotals } from "@/lib/invoice";
 import type { InvoiceStatus, InvoiceType } from "@prisma/client";
@@ -141,7 +141,7 @@ export async function convertQuoteToInvoice(quoteId: string): Promise<SaveResult
 }
 
 export async function deleteInvoice(id: string) {
-  await requireUser();
+  await requireRole("ADMIN");
   const inv = await prisma.invoice.delete({ where: { id } });
   revalidatePath("/invoices");
   revalidatePath(`/clients/${inv.clientId}`);
