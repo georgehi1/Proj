@@ -5,7 +5,12 @@ import { redirect } from "next/navigation";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/session";
-import { contractorSchema, type ContractorInput } from "@/lib/validation";
+import {
+  contractorSchema,
+  availabilitySchema,
+  type ContractorInput,
+  type AvailabilityInput,
+} from "@/lib/validation";
 
 export type SaveResult = { ok: boolean; id?: string; error?: string };
 
@@ -52,4 +57,35 @@ export async function deleteContractor(id: string) {
   await prisma.contractor.delete({ where: { id } });
   revalidatePath("/contractors");
   redirect("/contractors");
+}
+
+export async function addAvailability(
+  contractorId: string,
+  input: AvailabilityInput
+): Promise<SaveResult> {
+  await requireUser();
+  const parsed = availabilitySchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid data" };
+  }
+  const d = parsed.data;
+  await prisma.contractorAvailability.create({
+    data: {
+      contractorId,
+      kind: d.kind,
+      startDate: new Date(d.startDate),
+      endDate: new Date(d.endDate),
+      note: d.note?.trim() || null,
+    },
+  });
+  revalidatePath(`/contractors/${contractorId}`);
+  revalidatePath("/calendar");
+  return { ok: true, id: contractorId };
+}
+
+export async function deleteAvailability(id: string) {
+  await requireUser();
+  const window = await prisma.contractorAvailability.delete({ where: { id } });
+  revalidatePath(`/contractors/${window.contractorId}`);
+  revalidatePath("/calendar");
 }

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { PageHeader } from "@/components/ui";
 import { JobForm } from "../../JobForm";
+import { getContractorOptions } from "../../contractorOptions";
 
 export default async function EditJobPage({
   params,
@@ -15,11 +16,7 @@ export default async function EditJobPage({
       include: { contractors: { select: { id: true } } },
     }),
     prisma.client.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
-    prisma.contractor.findMany({
-      where: { active: true },
-      orderBy: { name: "asc" },
-      select: { id: true, name: true, trade: true },
-    }),
+    getContractorOptions(id),
   ]);
   if (!job) notFound();
 

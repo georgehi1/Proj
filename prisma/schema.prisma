@@ -197,7 +197,29 @@ model Contractor {
 
   jobs Job[] @relation("JobContractors")
 
+  availability ContractorAvailability[]
+
   @@index([name])
+}
+
+enum AvailabilityKind {
+  AVAILABLE
+  TIME_OFF
+}
+
+// A day-level window for a contractor. AVAILABLE = periods they can work;
+// TIME_OFF = holidays/blocks that override availability. Dates are inclusive.
+model ContractorAvailability {
+  id           String           @id @default(cuid())
+  contractorId String
+  contractor   Contractor       @relation(fields: [contractorId], references: [id], onDelete: Cascade)
+  kind         AvailabilityKind @default(AVAILABLE)
+  startDate    DateTime
+  endDate      DateTime
+  note         String?
+  createdAt    DateTime         @default(now())
+
+  @@index([contractorId])
 }
 
 // Arbitrary file attached to a job (certificates, plans, signed quotes, etc.).

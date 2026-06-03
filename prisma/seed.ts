@@ -73,6 +73,23 @@ async function main() {
     },
   });
 
+  // Demo availability: Dave free for the next 4 weeks; Priya free for 2 weeks
+  // with a few days off in the middle.
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const addDays = (n: number) => {
+    const d = new Date(today);
+    d.setDate(d.getDate() + n);
+    return d;
+  };
+  await prisma.contractorAvailability.createMany({
+    data: [
+      { contractorId: dave.id, kind: "AVAILABLE", startDate: today, endDate: addDays(28), note: "Next 4 weeks" },
+      { contractorId: priya.id, kind: "AVAILABLE", startDate: today, endDate: addDays(14) },
+      { contractorId: priya.id, kind: "TIME_OFF", startDate: addDays(5), endDate: addDays(7), note: "Holiday" },
+    ],
+  });
+
   // --- Clients ---
   const smith = await prisma.client.create({
     data: {

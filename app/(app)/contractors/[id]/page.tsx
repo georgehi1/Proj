@@ -6,6 +6,7 @@ import { StatusBadge } from "@/components/StatusBadge";
 import { ConfirmButton } from "@/components/ConfirmButton";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { deleteContractor } from "../actions";
+import { AvailabilityManager } from "./AvailabilityManager";
 
 export default async function ContractorDetailPage({
   params,
@@ -20,9 +21,22 @@ export default async function ContractorDetailPage({
         orderBy: { createdAt: "desc" },
         include: { client: { select: { id: true, name: true } } },
       },
+      availability: {
+        orderBy: { startDate: "asc" },
+        select: { id: true, kind: true, startDate: true, endDate: true, note: true },
+      },
     },
   });
   if (!contractor) notFound();
+
+  const day = (d: Date) => d.toISOString().slice(0, 10);
+  const availabilityWindows = contractor.availability.map((w) => ({
+    id: w.id,
+    kind: w.kind,
+    start: day(w.startDate),
+    end: day(w.endDate),
+    note: w.note,
+  }));
 
   // Workload: upcoming scheduled jobs that aren't finished, soonest first.
   const today = new Date();
@@ -107,6 +121,11 @@ export default async function ContractorDetailPage({
               <p className="text-xs text-slate-400">Next job</p>
             </Card>
           </div>
+
+          <Card>
+            <CardHeader title="Availability" />
+            <AvailabilityManager contractorId={contractor.id} windows={availabilityWindows} />
+          </Card>
 
           <Card>
             <CardHeader title={`Scheduled workload (${upcoming.length})`} />

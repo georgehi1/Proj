@@ -7,7 +7,21 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Card, Field, Input, Select, Textarea } from "@/components/ui";
 import { jobSchema, type JobInput } from "@/lib/validation";
+import {
+  dayStatus,
+  STATUS_CLASS,
+  STATUS_LABEL,
+  type AvailabilityWindow,
+} from "@/lib/availability";
 import { saveJob } from "./actions";
+
+type FormContractor = {
+  id: string;
+  name: string;
+  trade: string | null;
+  availability: AvailabilityWindow[];
+  bookedDates: string[];
+};
 
 const STATUSES: JobInput["status"][] = [
   "ENQUIRY",
@@ -27,7 +41,7 @@ export function JobForm({
   id?: string;
   defaults?: Partial<JobInput>;
   clients: { id: string; name: string }[];
-  contractors: { id: string; name: string; trade: string | null }[];
+  contractors: FormContractor[];
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -36,6 +50,7 @@ export function JobForm({
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<JobInput>({
     resolver: zodResolver(jobSchema),
@@ -50,6 +65,8 @@ export function JobForm({
       ...defaults,
     },
   });
+
+  const scheduledDate = watch("scheduledDate");
 
   const onSubmit = (values: JobInput) => {
     setServerError(undefined);
@@ -101,7 +118,13 @@ export function JobForm({
           </Field>
         </div>
 
-        <Field label="Contractors on this job">
+        <Field
+          label={
+            scheduledDate
+              ? `Contractors on this job — availability for ${scheduledDate}`
+              : "Contractors on this job"
+          }
+        >
           {contractors.length === 0 ? (
             <p className="text-sm text-slate-400">
               No contractors yet —{" "}
@@ -112,22 +135,39 @@ export function JobForm({
             </p>
           ) : (
             <div className="grid gap-2 sm:grid-cols-2">
-              {contractors.map((c) => (
-                <label
-                  key={c.id}
-                  className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm hover:bg-slate-50"
-                >
-                  <input
-                    type="checkbox"
-                    value={c.id}
-                    {...register("contractorIds")}
-                    className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
-                  />
-                  <span className="text-slate-700">{c.name}</span>
-                  {c.trade && <span className="text-xs text-slate-400">{c.trade}</span>}
-                </label>
-              ))}
+              {contractors.map((c) => {
+                const status = scheduledDate
+                  ? dayStatus(c.availability, c.bookedDates, scheduledDate)
+                  : null;
+                return (
+                  <label
+                    key={c.id}
+                    className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2 text-sm hover:bg-slate-50"
+                  >
+                    <input
+                      type="checkbox"
+                      value={c.id}
+                      {...register("contractorIds")}
+                      className="h-4 w-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500"
+                    />
+                    <span className="text-slate-700">{c.name}</span>
+                    {c.trade && <span className="text-xs text-slate-400">{c.trade}</span>}
+                    {status && (
+                      <span
+                        className={`ml-auto inline-flex rounded-full px-2 py-0.5 text-xs font-medium ${STATUS_CLASS[status]}`}
+                      >
+                        {STATUS_LABEL[status]}
+                      </span>
+                    )}
+                  </label>
+                );
+              })}
             </div>
+          )}
+          {!scheduledDate && (
+            <p className="mt-1 text-xs text-slate-400">
+              Set a scheduled date above to see who&apos;s free.
+            </p>
           )}
         </Field>
 

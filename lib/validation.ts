@@ -45,6 +45,19 @@ export const contractorSchema = z.object({
 });
 export type ContractorInput = z.infer<typeof contractorSchema>;
 
+export const availabilitySchema = z
+  .object({
+    kind: z.enum(["AVAILABLE", "TIME_OFF"]),
+    startDate: z.string().trim().min(1, "Start date is required"),
+    endDate: z.string().trim().min(1, "End date is required"),
+    note: z.string().trim().optional(),
+  })
+  .refine((d) => d.endDate >= d.startDate, {
+    message: "End date must be on or after the start date",
+    path: ["endDate"],
+  });
+export type AvailabilityInput = z.infer<typeof availabilitySchema>;
+
 export const communicationSchema = z.object({
   clientId: z.string().min(1),
   jobId: z.string().trim().optional(),

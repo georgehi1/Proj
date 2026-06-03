@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/db";
 import { PageHeader } from "@/components/ui";
 import { JobForm } from "../JobForm";
+import { getContractorOptions } from "../contractorOptions";
 
 export default async function NewJobPage({
   searchParams,
@@ -10,11 +11,7 @@ export default async function NewJobPage({
   const { clientId, contractorId } = await searchParams;
   const [clients, contractors] = await Promise.all([
     prisma.client.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
-    prisma.contractor.findMany({
-      where: { active: true },
-      orderBy: { name: "asc" },
-      select: { id: true, name: true, trade: true },
-    }),
+    getContractorOptions(),
   ]);
 
   return (
