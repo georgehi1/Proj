@@ -27,18 +27,32 @@ async function main() {
     },
   });
 
-  // --- Users ---
-  const passwordHash = await bcrypt.hash("password123", 10);
+  // --- Admin user (always created; credentials configurable via env) ---
+  const adminEmail = (process.env.ADMIN_EMAIL ?? "admin@homefixlimited.co.uk").toLowerCase();
+  const adminPassword = process.env.ADMIN_PASSWORD ?? "password123";
+  const passwordHash = await bcrypt.hash(adminPassword, 10);
   const admin = await prisma.user.upsert({
-    where: { email: "admin@homefixlimited.co.uk" },
+    where: { email: adminEmail },
     update: {},
     create: {
       name: "Office Admin",
-      email: "admin@homefixlimited.co.uk",
+      email: adminEmail,
       passwordHash,
       role: "ADMIN",
     },
   });
+  console.log(`Admin ready: ${adminEmail}`);
+
+  // Demo data is opt-in (local only) — never seed it into production.
+  if (process.env.SEED_DEMO !== "true") {
+    console.log("SEED_DEMO not set — skipping demo clients/jobs/invoices.");
+    return;
+  }
+  if ((await prisma.client.count()) > 0) {
+    console.log("Clients already present — skipping demo data.");
+    return;
+  }
+
   const fitter = await prisma.user.upsert({
     where: { email: "dave@homefixlimited.co.uk" },
     update: {},
@@ -49,12 +63,6 @@ async function main() {
       role: "STAFF",
     },
   });
-
-  // Only seed demo data on an empty database.
-  if ((await prisma.client.count()) > 0) {
-    console.log("Clients already present — skipping demo data.");
-    return;
-  }
 
   // --- Clients ---
   const smith = await prisma.client.create({
@@ -194,7 +202,7 @@ async function main() {
     },
   });
 
-  console.log("Done. Log in with admin@homefixlimited.co.uk / password123");
+  console.log(`Done. Demo data seeded. Log in with ${adminEmail}.`);
 }
 
 main()

@@ -84,8 +84,10 @@ Two tools help bring across data that currently lives in spreadsheets, Word docs
 | `npm run dev`        | Start the dev server                            |
 | `npm run build`      | Production build                                |
 | `npm run typecheck`  | TypeScript type checking                        |
-| `npm run db:migrate` | Create & apply a Prisma migration               |
-| `npm run db:seed`    | Seed admin user, company settings and demo data |
+| `npm run db:migrate` | Create & apply a Prisma migration (local)       |
+| `npm run db:deploy`  | Apply pending migrations (production)           |
+| `npm run db:seed`    | Seed admin, settings **and demo data** (local)  |
+| `npm run db:seed:prod` | Seed admin + settings only (no demo data)     |
 | `npm run db:studio`  | Open Prisma Studio to browse the database       |
 | `npm run smoke`      | End-to-end smoke test (server must be running)  |
 
@@ -110,13 +112,31 @@ components/              Shared UI primitives, sidebar, badges, filters
 prisma/                  schema.prisma + seed.ts
 ```
 
-## Deploying to Vercel
+## Deploying to Vercel + Supabase
 
-1. Push this repo to GitHub and import it into Vercel.
-2. Provision a Postgres database (e.g. Neon or Vercel Postgres) and set
-   `DATABASE_URL` and `AUTH_SECRET` as environment variables.
-3. Run `npx prisma migrate deploy` against the production database (e.g. as part
-   of the build), then seed an admin user.
+The app runs on **Vercel**; the database is a **Supabase** Postgres. Vercel runs
+the migrations automatically on deploy (`vercel.json` sets the build command to
+`prisma migrate deploy && next build`).
+
+1. **Create the Supabase project.** In the dashboard → **Settings → Database →
+   Connection string**, copy two strings:
+   - **Transaction pooler** (port `6543`) → `DATABASE_URL` (append
+     `?pgbouncer=true&connection_limit=1`). This is what the serverless app uses.
+   - **Direct connection** (port `5432`) → `DIRECT_URL`. Used only for migrations.
+2. **Import the repo into Vercel** and set these environment variables:
+   - `DATABASE_URL` and `DIRECT_URL` (from step 1)
+   - `AUTH_SECRET` (`openssl rand -base64 32`)
+   - `ADMIN_EMAIL` and `ADMIN_PASSWORD` (your real first-login credentials)
+   - `ANTHROPIC_API_KEY` (optional — only for AI document import)
+   - Leave `SEED_DEMO` unset in production.
+3. **Deploy.** The build runs `prisma migrate deploy`, creating all tables.
+4. **Create the admin user once** (run locally with the production `DATABASE_URL`
+   in your shell, or from a Vercel one-off): `npm run db:seed:prod` — this inserts
+   only the company settings and the admin account (no demo data).
+
+> Why two URLs? Supabase's pooler (PgBouncer) is required for serverless
+> connection limits, but Prisma migrations need a direct connection — hence
+> `DATABASE_URL` (pooled) and `DIRECT_URL` (direct).
 
 ## Not included in v1 (natural next steps)
 
