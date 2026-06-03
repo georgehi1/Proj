@@ -101,6 +101,7 @@ model Job {
 
   communications Communication[]
   invoices       Invoice[]
+  photos         JobPhoto[]
 
   @@index([clientId])
   @@index([status])
@@ -159,6 +160,23 @@ model InvoiceLineItem {
   position    Int     @default(0)
 
   @@index([invoiceId])
+}
+
+// Photos attached to a job. The binary lives in the DB so it works in any
+// environment with no extra storage setup; swap `data` for an object-storage
+// URL (Vercel Blob / S3) if volumes grow.
+model JobPhoto {
+  id        String   @id @default(cuid())
+  jobId     String
+  job       Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  filename  String
+  mimeType  String
+  size      Int
+  data      Bytes
+  caption   String?
+  createdAt DateTime @default(now())
+
+  @@index([jobId])
 }
 
 // Single-row table (id = 1) holding company details for invoice/quote branding.

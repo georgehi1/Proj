@@ -76,6 +76,14 @@ for (const path of ["/clients/new", "/jobs/new", "/invoices/new", "/settings"]) 
   assert(r.status === 200, `${path} renders`);
 }
 
+// 5b. Calendar renders the current month
+{
+  const r = await req("/calendar");
+  const h = await r.text();
+  const monthName = new Date().toLocaleString("en-GB", { month: "long" });
+  assert(r.status === 200 && h.includes(monthName), `/calendar shows ${monthName}`);
+}
+
 // 6. Find an invoice id and download its PDF
 const invList = await (await req("/invoices")).text();
 const m = invList.match(/\/invoices\/(c[a-z0-9]{20,})"/);

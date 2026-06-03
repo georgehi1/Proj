@@ -12,6 +12,7 @@ import { ConfirmButton } from "@/components/ConfirmButton";
 import { formatCurrency, formatDate, formatDateTime } from "@/lib/format";
 import { deleteJob } from "../actions";
 import { JobStatusControl } from "./JobStatusControl";
+import { JobPhotos } from "./JobPhotos";
 
 export default async function JobDetailPage({
   params,
@@ -25,6 +26,10 @@ export default async function JobDetailPage({
       client: { select: { id: true, name: true } },
       assignedTo: { select: { name: true } },
       invoices: { orderBy: { issueDate: "desc" } },
+      photos: {
+        orderBy: { createdAt: "asc" },
+        select: { id: true, filename: true },
+      },
       communications: {
         orderBy: { createdAt: "desc" },
         include: { createdBy: { select: { name: true } } },
@@ -90,6 +95,11 @@ export default async function JobDetailPage({
                 </div>
               )}
             </dl>
+          </Card>
+
+          <Card>
+            <CardHeader title={`Photos${job.photos.length ? ` (${job.photos.length})` : ""}`} />
+            <JobPhotos jobId={job.id} photos={job.photos} />
           </Card>
 
           <Card>

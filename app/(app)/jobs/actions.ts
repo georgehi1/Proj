@@ -59,3 +59,50 @@ export async function deleteJob(id: string) {
   revalidatePath(`/clients/${job.clientId}`);
   redirect("/jobs");
 }
+
+const MAX_PHOTO_BYTES = 10 * 1024 * 1024; // 10MB
+
+export async function uploadJobPhotos(
+  jobId: string,
+  formData: FormData
+): Promise<SaveResult> {
+  await requireUser();
+
+  const files = formData
+    .getAll("photos")
+    .filter((f): f is File => f instanceof File && f.size > 0);
+
+  if (files.length === 0) {
+    return { ok: false, error: "Please choose at least one image." };
+  }
+
+  for (const file of files) {
+    if (!file.type.startsWith("image/")) {
+      return { ok: false, error: `"${file.name}" is not an image.` };
+    }
+    if (file.size > MAX_PHOTO_BYTES) {
+      return { ok: false, error: `"${file.name}" is larger than 10MB.` };
+    }
+  }
+
+  const photos = await Promise.all(
+    files.map(async (file) => ({
+      jobId,
+      filename: file.name,
+      mimeType: file.type,
+      size: file.size,
+      data: Buffer.from(await file.arrayBuffer()),
+    }))
+  );
+
+  await prisma.jobPhoto.createMany({ data: photos });
+
+  revalidatePath(`/jobs/${jobId}`);
+  return { ok: true, id: jobId };
+}
+
+export async function deleteJobPhoto(photoId: string) {
+  await requireUser();
+  const photo = await prisma.jobPhoto.delete({ where: { id: photoId } });
+  revalidatePath(`/jobs/${photo.jobId}`);
+}
