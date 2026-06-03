@@ -19,6 +19,7 @@ import {
   contractorColor,
   type CalendarView,
 } from "@/lib/calendar";
+import { dayStatus } from "@/lib/availability";
 import { CalendarBoard, type CalendarDay, type CalendarJob } from "./CalendarBoard";
 
 const dayKey = (d: Date) => format(d, "yyyy-MM-dd");
@@ -101,6 +102,28 @@ export default async function CalendarPage({
     inMonth: view === "month" ? isSameMonth(d, reference) : true,
     isToday: isToday(d),
   }));
+
+  // When filtered to one contractor, shade days by their availability.
+  let availabilityByDay: Record<string, "off" | "unmarked" | "available"> | undefined;
+  let selectedContractorName: string | undefined;
+  if (contractor) {
+    selectedContractorName = contractors.find((c) => c.id === contractor)?.name;
+    const windows = await prisma.contractorAvailability.findMany({
+      where: { contractorId: contractor },
+      select: { kind: true, startDate: true, endDate: true },
+    });
+    const w = windows.map((x) => ({
+      kind: x.kind,
+      start: dayKey(x.startDate),
+      end: dayKey(x.endDate),
+    }));
+    availabilityByDay = {};
+    for (const d of days) {
+      const k = dayKey(d);
+      const s = dayStatus(w, [], k);
+      availabilityByDay[k] = s === "off" ? "off" : s === "unmarked" ? "unmarked" : "available";
+    }
+  }
 
   // Navigation (preserve the contractor filter).
   const step = (dir: -1 | 1) => {
@@ -192,11 +215,30 @@ export default async function CalendarPage({
         </div>
       )}
 
+      {selectedContractorName && (
+        <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500">
+          <span>
+            Showing <span className="font-medium text-slate-700">{selectedContractorName}</span>
+            &rsquo;s availability:
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-3 w-3 rounded border border-red-200 bg-red-50" /> Time off
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-3 w-3 rounded border border-slate-200 bg-slate-100" /> No availability set
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-3 w-3 rounded border border-slate-200 bg-white" /> Available
+          </span>
+        </div>
+      )}
+
       <CalendarBoard
         view={view}
         days={calendarDays}
         jobsByDay={jobsByDay}
         unscheduled={unscheduledJobs.map(toChip)}
+        availabilityByDay={availabilityByDay}
       />
     </div>
   );

@@ -64,11 +64,13 @@ export function CalendarBoard({
   days,
   jobsByDay,
   unscheduled,
+  availabilityByDay,
 }: {
   view: CalendarView;
   days: CalendarDay[];
   jobsByDay: Record<string, CalendarJob[]>;
   unscheduled: CalendarJob[];
+  availabilityByDay?: Record<string, "off" | "unmarked" | "available">;
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -118,13 +120,22 @@ export function CalendarBoard({
           {days.map((day) => {
             const dayJobs = jobsByDay[day.key] ?? [];
             const isOver = over === day.key;
+            const avail = availabilityByDay?.[day.key];
+            const cellBg =
+              avail === "off"
+                ? "bg-red-50"
+                : avail === "unmarked"
+                  ? "bg-slate-100/70"
+                  : day.inMonth
+                    ? "bg-white"
+                    : "bg-slate-50/60";
             return (
               <div
                 key={day.key}
                 {...dropHandlers(day.key)}
-                className={`${minH} border-b border-r border-slate-100 p-1.5 ${
-                  day.inMonth ? "bg-white" : "bg-slate-50/60"
-                } ${isOver ? "ring-2 ring-inset ring-brand-400" : ""}`}
+                className={`${minH} border-b border-r border-slate-100 p-1.5 ${cellBg} ${
+                  isOver ? "ring-2 ring-inset ring-brand-400" : ""
+                }`}
               >
                 <div className="mb-1 flex items-center gap-2">
                   {view === "day" && (
@@ -141,6 +152,11 @@ export function CalendarBoard({
                   >
                     {day.label}
                   </span>
+                  {avail === "off" && (
+                    <span className="ml-auto text-[10px] font-medium uppercase tracking-wide text-red-600">
+                      Off
+                    </span>
+                  )}
                 </div>
                 <div className="space-y-1">
                   {dayJobs.map((job) => (
