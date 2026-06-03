@@ -1,7 +1,6 @@
-# Homefix CRM
+#  CRM
 
-A simple, easy-to-use CRM for **Homefix Limited**, a property-maintenance &
-renovation company in Leatherhead, Surrey. It covers the three things the office
+A simple, easy-to-use CRM for ****, a . It covers the three things the office
 needs day to day:
 
 - **Job management** — track work from enquiry → quoted → scheduled → in progress → completed.
@@ -61,7 +60,7 @@ npm run dev
 
 Open http://localhost:3000 and sign in with the seeded account:
 
-> **admin@homefixlimited.co.uk** / **password123**
+> **** / **password123**
 
 ## Migrating existing data
 
