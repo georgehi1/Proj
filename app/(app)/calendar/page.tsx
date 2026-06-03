@@ -1,148 +1,203 @@
-import Link from "next/link";
 import {
-  startOfMonth,
-  endOfMonth,
-  startOfWeek,
-  endOfWeek,
-  eachDayOfInterval,
-  addMonths,
-  subMonths,
   format,
   isSameMonth,
   isToday,
-  parse,
-  isValid,
+  addMonths,
+  subMonths,
+  addWeeks,
+  subWeeks,
+  addDays,
+  subDays,
 } from "date-fns";
 import { prisma } from "@/lib/db";
-import { Card, LinkButton, PageHeader } from "@/components/ui";
-import type { JobStatus } from "@prisma/client";
+import { LinkButton, PageHeader } from "@/components/ui";
+import { ListFilters } from "@/components/ListFilters";
+import {
+  calendarRange,
+  getReferenceDate,
+  isCalendarView,
+  contractorColor,
+  type CalendarView,
+} from "@/lib/calendar";
+import { CalendarBoard, type CalendarDay, type CalendarJob } from "./CalendarBoard";
 
-const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-
-const statusDot: Record<JobStatus, string> = {
-  ENQUIRY: "bg-slate-400",
-  QUOTED: "bg-amber-500",
-  SCHEDULED: "bg-blue-500",
-  IN_PROGRESS: "bg-brand-500",
-  COMPLETED: "bg-green-500",
-  CANCELLED: "bg-red-400",
-};
-
-function dayKey(d: Date) {
-  return format(d, "yyyy-MM-dd");
-}
+const dayKey = (d: Date) => format(d, "yyyy-MM-dd");
 
 export default async function CalendarPage({
   searchParams,
 }: {
-  searchParams: Promise<{ month?: string }>;
+  searchParams: Promise<{ view?: string; date?: string; contractor?: string }>;
 }) {
-  const { month } = await searchParams;
-  const parsed = month ? parse(month, "yyyy-MM", new Date()) : new Date();
-  const reference = isValid(parsed) ? parsed : new Date();
+  const { view: viewParam, date, contractor } = await searchParams;
+  const view: CalendarView = isCalendarView(viewParam) ? viewParam : "month";
+  const reference = getReferenceDate(date);
+  const { gridStart, gridEnd, days } = calendarRange(view, reference);
 
-  const gridStart = startOfWeek(startOfMonth(reference), { weekStartsOn: 1 });
-  const gridEnd = endOfWeek(endOfMonth(reference), { weekStartsOn: 1 });
-  const days = eachDayOfInterval({ start: gridStart, end: gridEnd });
+  const contractors = await prisma.contractor.findMany({
+    orderBy: { name: "asc" },
+    select: { id: true, name: true },
+  });
+  const colorOf = new Map(contractors.map((c, i) => [c.id, contractorColor(i)]));
+  const contractorWhere = contractor
+    ? { contractors: { some: { id: contractor } } }
+    : {};
 
-  const jobs = await prisma.job.findMany({
-    where: { scheduledDate: { gte: gridStart, lte: gridEnd } },
-    orderBy: { scheduledDate: "asc" },
-    select: {
-      id: true,
-      title: true,
-      status: true,
-      scheduledDate: true,
-      client: { select: { name: true } },
-    },
+  const [scheduled, unscheduledJobs] = await Promise.all([
+    prisma.job.findMany({
+      where: {
+        scheduledDate: { gte: gridStart, lte: gridEnd },
+        ...contractorWhere,
+      },
+      orderBy: { scheduledDate: "asc" },
+      select: {
+        id: true,
+        title: true,
+        scheduledDate: true,
+        client: { select: { name: true } },
+        contractors: { select: { id: true, name: true } },
+      },
+    }),
+    prisma.job.findMany({
+      where: {
+        scheduledDate: null,
+        status: { notIn: ["COMPLETED", "CANCELLED"] },
+        ...contractorWhere,
+      },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+      select: {
+        id: true,
+        title: true,
+        client: { select: { name: true } },
+        contractors: { select: { id: true, name: true } },
+      },
+    }),
+  ]);
+
+  const toChip = (j: {
+    id: string;
+    title: string;
+    client: { name: string };
+    contractors: { id: string; name: string }[];
+  }): CalendarJob => ({
+    id: j.id,
+    title: j.title,
+    clientName: j.client.name,
+    contractorDots: j.contractors.map((c) => colorOf.get(c.id) ?? "bg-slate-300"),
+    contractorNames: j.contractors.map((c) => c.name),
   });
 
-  const jobsByDay = new Map<string, typeof jobs>();
-  for (const job of jobs) {
-    if (!job.scheduledDate) continue;
-    const key = dayKey(job.scheduledDate);
-    const list = jobsByDay.get(key) ?? [];
-    list.push(job);
-    jobsByDay.set(key, list);
+  const jobsByDay: Record<string, CalendarJob[]> = {};
+  for (const j of scheduled) {
+    if (!j.scheduledDate) continue;
+    const key = dayKey(j.scheduledDate);
+    (jobsByDay[key] ??= []).push(toChip(j));
   }
 
-  const prevMonth = format(subMonths(reference, 1), "yyyy-MM");
-  const nextMonth = format(addMonths(reference, 1), "yyyy-MM");
+  const calendarDays: CalendarDay[] = days.map((d) => ({
+    key: dayKey(d),
+    label: format(d, "d"),
+    weekday: format(d, "EEE"),
+    inMonth: view === "month" ? isSameMonth(d, reference) : true,
+    isToday: isToday(d),
+  }));
+
+  // Navigation (preserve the contractor filter).
+  const step = (dir: -1 | 1) => {
+    const fn =
+      view === "month"
+        ? dir === 1
+          ? addMonths
+          : subMonths
+        : view === "week"
+          ? dir === 1
+            ? addWeeks
+            : subWeeks
+          : dir === 1
+            ? addDays
+            : subDays;
+    return format(fn(reference, 1), "yyyy-MM-dd");
+  };
+  const q = (params: Record<string, string>) => {
+    const sp = new URLSearchParams(params);
+    if (contractor) sp.set("contractor", contractor);
+    return `/calendar?${sp.toString()}`;
+  };
+
+  const title =
+    view === "month"
+      ? format(reference, "MMMM yyyy")
+      : view === "week"
+        ? `${format(gridStart, "d MMM")} – ${format(gridEnd, "d MMM yyyy")}`
+        : format(reference, "EEEE d MMM yyyy");
 
   return (
     <div>
       <PageHeader
         title="Calendar"
-        subtitle="Jobs by their scheduled date."
+        subtitle="Jobs by scheduled date — drag to reschedule."
         action={
           <div className="flex items-center gap-2">
-            <LinkButton href={`/calendar?month=${prevMonth}`} variant="secondary">
-              ‹ Prev
+            <LinkButton href={q({ view, date: step(-1) })} variant="secondary">
+              ‹
             </LinkButton>
-            <LinkButton href="/calendar" variant="secondary">
+            <LinkButton href={q({ view })} variant="secondary">
               Today
             </LinkButton>
-            <LinkButton href={`/calendar?month=${nextMonth}`} variant="secondary">
-              Next ›
+            <LinkButton href={q({ view, date: step(1) })} variant="secondary">
+              ›
             </LinkButton>
           </div>
         }
       />
 
-      <h2 className="mb-3 text-lg font-semibold text-slate-800">
-        {format(reference, "MMMM yyyy")}
-      </h2>
-
-      <Card className="overflow-hidden p-0">
-        <div className="grid grid-cols-7 border-b border-slate-200 bg-slate-50 text-xs font-medium uppercase tracking-wide text-slate-500">
-          {WEEKDAYS.map((d) => (
-            <div key={d} className="px-2 py-2 text-center">
-              {d}
-            </div>
-          ))}
-        </div>
-        <div className="grid grid-cols-7">
-          {days.map((day) => {
-            const key = dayKey(day);
-            const dayJobs = jobsByDay.get(key) ?? [];
-            const inMonth = isSameMonth(day, reference);
-            const today = isToday(day);
-            return (
-              <div
-                key={key}
-                className={`min-h-28 border-b border-r border-slate-100 p-1.5 ${
-                  inMonth ? "bg-white" : "bg-slate-50/60"
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <h2 className="text-lg font-semibold text-slate-800">{title}</h2>
+          <div className="inline-flex overflow-hidden rounded-lg border border-slate-300 text-sm">
+            {(["month", "week", "day"] as const).map((v) => (
+              <a
+                key={v}
+                href={q({ view: v, date: format(reference, "yyyy-MM-dd") })}
+                className={`px-3 py-1.5 capitalize ${
+                  v === view ? "bg-brand-600 text-white" : "bg-white text-slate-600 hover:bg-slate-50"
                 }`}
               >
-                <div
-                  className={`mb-1 flex h-6 w-6 items-center justify-center rounded-full text-xs ${
-                    today
-                      ? "bg-brand-600 font-semibold text-white"
-                      : inMonth
-                        ? "text-slate-600"
-                        : "text-slate-300"
-                  }`}
-                >
-                  {format(day, "d")}
-                </div>
-                <div className="space-y-1">
-                  {dayJobs.map((job) => (
-                    <Link
-                      key={job.id}
-                      href={`/jobs/${job.id}`}
-                      title={`${job.title} — ${job.client.name}`}
-                      className="flex items-center gap-1.5 rounded bg-slate-50 px-1.5 py-1 text-xs text-slate-700 hover:bg-slate-100"
-                    >
-                      <span className={`h-2 w-2 shrink-0 rounded-full ${statusDot[job.status]}`} />
-                      <span className="truncate">{job.title}</span>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            );
-          })}
+                {v}
+              </a>
+            ))}
+          </div>
         </div>
-      </Card>
+        <ListFilters
+          filters={[
+            {
+              name: "contractor",
+              options: [
+                { value: "", label: "All contractors" },
+                ...contractors.map((c) => ({ value: c.id, label: c.name })),
+              ],
+            },
+          ]}
+        />
+      </div>
+
+      {contractors.length > 0 && (
+        <div className="mb-4 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
+          {contractors.map((c, i) => (
+            <span key={c.id} className="inline-flex items-center gap-1.5">
+              <span className={`h-2 w-2 rounded-full ${contractorColor(i)}`} />
+              {c.name}
+            </span>
+          ))}
+        </div>
+      )}
+
+      <CalendarBoard
+        view={view}
+        days={calendarDays}
+        jobsByDay={jobsByDay}
+        unscheduled={unscheduledJobs.map(toChip)}
+      />
     </div>
   );
 }

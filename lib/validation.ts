@@ -27,9 +27,23 @@ export const jobSchema = z.object({
   ]),
   siteAddress: z.string().trim().optional(),
   scheduledDate: z.string().trim().optional(),
-  assignedToId: z.string().trim().optional(),
+  contractorIds: z.array(z.string()).default([]),
 });
 export type JobInput = z.infer<typeof jobSchema>;
+
+export const contractorSchema = z.object({
+  name: z.string().trim().min(1, "Name is required"),
+  trade: z.string().trim().optional(),
+  companyName: z.string().trim().optional(),
+  email: z.string().trim().email("Invalid email").or(z.literal("")).optional(),
+  phone: z.string().trim().optional(),
+  dayRate: z
+    .union([z.coerce.number().min(0), z.literal("")])
+    .optional(),
+  notes: z.string().trim().optional(),
+  active: z.boolean().default(true),
+});
+export type ContractorInput = z.infer<typeof contractorSchema>;
 
 export const communicationSchema = z.object({
   clientId: z.string().min(1),

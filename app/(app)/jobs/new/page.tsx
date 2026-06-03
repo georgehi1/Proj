@@ -5,18 +5,29 @@ import { JobForm } from "../JobForm";
 export default async function NewJobPage({
   searchParams,
 }: {
-  searchParams: Promise<{ clientId?: string }>;
+  searchParams: Promise<{ clientId?: string; contractorId?: string }>;
 }) {
-  const { clientId } = await searchParams;
-  const [clients, staff] = await Promise.all([
+  const { clientId, contractorId } = await searchParams;
+  const [clients, contractors] = await Promise.all([
     prisma.client.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
-    prisma.user.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } }),
+    prisma.contractor.findMany({
+      where: { active: true },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true, trade: true },
+    }),
   ]);
 
   return (
     <div>
       <PageHeader title="New job" />
-      <JobForm clients={clients} staff={staff} defaults={clientId ? { clientId } : undefined} />
+      <JobForm
+        clients={clients}
+        contractors={contractors}
+        defaults={{
+          ...(clientId ? { clientId } : {}),
+          ...(contractorId ? { contractorIds: [contractorId] } : {}),
+        }}
+      />
     </div>
   );
 }

@@ -61,8 +61,8 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  assignedJobs   Job[]           @relation("JobAssignee")
-  communications Communication[] @relation("CommunicationAuthor")
+  communications      Communication[] @relation("CommunicationAuthor")
+  uploadedAttachments JobAttachment[] @relation("AttachmentUploader")
 }
 
 model Client {
@@ -96,14 +96,14 @@ model Job {
   status        JobStatus @default(ENQUIRY)
   siteAddress   String?
   scheduledDate DateTime?
-  assignedToId  String?
-  assignedTo    User?     @relation("JobAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
+  contractors    Contractor[]    @relation("JobContractors")
   communications Communication[]
   invoices       Invoice[]
   photos         JobPhoto[]
+  attachments    JobAttachment[]
 
   @@index([clientId])
   @@index([status])
@@ -177,6 +177,42 @@ model JobPhoto {
   data      Bytes
   caption   String?
   createdAt DateTime @default(now())
+
+  @@index([jobId])
+}
+
+// External tradespeople who carry out jobs. Office-managed records (no login).
+model Contractor {
+  id          String   @id @default(cuid())
+  name        String
+  trade       String?
+  companyName String?
+  email       String?
+  phone       String?
+  dayRate     Decimal? @db.Decimal(10, 2)
+  notes       String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  jobs Job[] @relation("JobContractors")
+
+  @@index([name])
+}
+
+// Arbitrary file attached to a job (certificates, plans, signed quotes, etc.).
+// Bytes live in the DB so it works with no extra storage setup.
+model JobAttachment {
+  id           String   @id @default(cuid())
+  jobId        String
+  job          Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  filename     String
+  mimeType     String
+  size         Int
+  data         Bytes
+  uploadedById String?
+  uploadedBy   User?    @relation("AttachmentUploader", fields: [uploadedById], references: [id], onDelete: SetNull)
+  createdAt    DateTime @default(now())
 
   @@index([jobId])
 }

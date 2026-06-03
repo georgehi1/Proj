@@ -13,6 +13,7 @@ import { formatCurrency, formatDate, formatDateTime } from "@/lib/format";
 import { deleteJob } from "../actions";
 import { JobStatusControl } from "./JobStatusControl";
 import { JobPhotos } from "./JobPhotos";
+import { JobAttachments } from "./JobAttachments";
 
 export default async function JobDetailPage({
   params,
@@ -24,11 +25,15 @@ export default async function JobDetailPage({
     where: { id },
     include: {
       client: { select: { id: true, name: true } },
-      assignedTo: { select: { name: true } },
+      contractors: { select: { id: true, name: true, trade: true } },
       invoices: { orderBy: { issueDate: "desc" } },
       photos: {
         orderBy: { createdAt: "asc" },
         select: { id: true, filename: true },
+      },
+      attachments: {
+        orderBy: { createdAt: "asc" },
+        select: { id: true, filename: true, size: true },
       },
       communications: {
         orderBy: { createdAt: "desc" },
@@ -77,12 +82,29 @@ export default async function JobDetailPage({
                 <dd><StatusBadge value={job.status} /></dd>
               </div>
               <div>
-                <dt className="text-slate-400">Assigned to</dt>
-                <dd className="text-slate-800">{job.assignedTo?.name ?? "Unassigned"}</dd>
-              </div>
-              <div>
                 <dt className="text-slate-400">Scheduled</dt>
                 <dd className="text-slate-800">{formatDate(job.scheduledDate)}</dd>
+              </div>
+              <div className="col-span-2">
+                <dt className="mb-1 text-slate-400">Contractors</dt>
+                <dd>
+                  {job.contractors.length === 0 ? (
+                    <span className="text-slate-800">Unassigned</span>
+                  ) : (
+                    <div className="flex flex-wrap gap-1.5">
+                      {job.contractors.map((c) => (
+                        <Link
+                          key={c.id}
+                          href={`/contractors/${c.id}`}
+                          className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-2.5 py-0.5 text-xs font-medium text-brand-700 hover:bg-brand-100"
+                        >
+                          {c.name}
+                          {c.trade && <span className="text-brand-400">· {c.trade}</span>}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </dd>
               </div>
               <div className="col-span-2">
                 <dt className="text-slate-400">Site address</dt>
@@ -100,6 +122,11 @@ export default async function JobDetailPage({
           <Card>
             <CardHeader title={`Photos${job.photos.length ? ` (${job.photos.length})` : ""}`} />
             <JobPhotos jobId={job.id} photos={job.photos} />
+          </Card>
+
+          <Card>
+            <CardHeader title={`Files${job.attachments.length ? ` (${job.attachments.length})` : ""}`} />
+            <JobAttachments jobId={job.id} attachments={job.attachments} />
           </Card>
 
           <Card>

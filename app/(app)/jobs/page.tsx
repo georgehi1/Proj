@@ -33,7 +33,7 @@ export default async function JobsPage({
     orderBy: [{ createdAt: "desc" }],
     include: {
       client: { select: { name: true } },
-      assignedTo: { select: { name: true } },
+      contractors: { select: { name: true } },
     },
   });
 
@@ -68,7 +68,7 @@ export default async function JobsPage({
                 <th className="px-4 py-3 font-medium">Job</th>
                 <th className="px-4 py-3 font-medium">Client</th>
                 <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 font-medium">Assigned</th>
+                <th className="px-4 py-3 font-medium">Contractors</th>
                 <th className="px-4 py-3 font-medium">Scheduled</th>
               </tr>
             </thead>
@@ -84,7 +84,11 @@ export default async function JobsPage({
                   <td className="px-4 py-3">
                     <StatusBadge value={j.status} />
                   </td>
-                  <td className="px-4 py-3 text-slate-600">{j.assignedTo?.name ?? "—"}</td>
+                  <td className="px-4 py-3 text-slate-600">
+                    {j.contractors.length
+                      ? j.contractors.map((c) => c.name).join(", ")
+                      : "—"}
+                  </td>
                   <td className="px-4 py-3 text-slate-600">{formatDate(j.scheduledDate)}</td>
                 </tr>
               ))}

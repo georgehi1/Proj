@@ -59,11 +59,12 @@ assert(dash.status === 200, "dashboard returns 200 when authed");
 assert(dashHtml.includes("Dashboard"), "dashboard renders heading");
 assert(dashHtml.includes("Outstanding"), "dashboard shows outstanding card");
 
-// 4. Clients & jobs & invoices list
+// 4. Clients & jobs & invoices & contractors list
 for (const [path, needle] of [
   ["/clients", "Sarah Smith"],
   ["/jobs", "Bathroom refurbishment"],
   ["/invoices", "Acme"],
+  ["/contractors", "Dave Brennan"],
 ]) {
   const r = await req(path);
   const h = await r.text();
@@ -77,18 +78,32 @@ for (const path of [
   "/jobs/new",
   "/invoices/new",
   "/invoices/import",
+  "/contractors/new",
   "/settings",
 ]) {
   const r = await req(path);
   assert(r.status === 200, `${path} renders`);
 }
 
-// 5b. Calendar renders the current month
+// 5b. Calendar renders in all three views
 {
-  const r = await req("/calendar");
-  const h = await r.text();
   const monthName = new Date().toLocaleString("en-GB", { month: "long" });
-  assert(r.status === 200 && h.includes(monthName), `/calendar shows ${monthName}`);
+  const month = await (await req("/calendar")).text();
+  assert(month.includes(monthName), `/calendar (month) shows ${monthName}`);
+  const week = await req("/calendar?view=week");
+  assert(week.status === 200 && (await week.text()).includes("Unscheduled"), "/calendar week view renders");
+  const day = await req("/calendar?view=day");
+  assert(day.status === 200, "/calendar day view renders");
+}
+
+// 5c. A job detail page shows assigned contractors
+{
+  const jobsHtml = await (await req("/jobs")).text();
+  const m = jobsHtml.match(/\/jobs\/(c[a-z0-9]{20,})"/);
+  if (m) {
+    const detail = await (await req(`/jobs/${m[1]}`)).text();
+    assert(detail.includes("Contractors"), "job detail shows Contractors section");
+  }
 }
 
 // 6. Find an invoice id and download its PDF

@@ -3,7 +3,12 @@
 A simple, easy-to-use CRM for a small business. It covers the three things the
 office needs day to day:
 
-- **Job management** — track work from enquiry → quoted → scheduled → in progress → completed.
+- **Job management** — track work from enquiry → quoted → scheduled → in progress →
+  completed, assign one or more contractors, and attach photos and files (certificates,
+  plans, signed quotes).
+- **Contractors** — a profile per tradesperson (trade, rates, contact) with their full job history.
+- **Scheduling** — a month/week/day calendar of scheduled jobs, colour-coded by
+  contractor, with drag-to-reschedule and an unscheduled-jobs panel.
 - **Invoicing** — build quotes & invoices with line items and VAT, track payment
   status, and export a branded PDF. A quote can be converted into an invoice in one click.
 - **Client communication** — log calls, emails, notes and site visits against each

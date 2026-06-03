@@ -31,17 +31,36 @@ export async function saveJob(
     status: d.status,
     siteAddress: clean(d.siteAddress),
     scheduledDate: d.scheduledDate ? new Date(d.scheduledDate) : null,
-    assignedToId: clean(d.assignedToId),
   };
+  const contractorRefs = d.contractorIds.map((cid) => ({ id: cid }));
 
   const job = id
-    ? await prisma.job.update({ where: { id }, data })
-    : await prisma.job.create({ data });
+    ? await prisma.job.update({
+        where: { id },
+        data: { ...data, contractors: { set: contractorRefs } },
+      })
+    : await prisma.job.create({
+        data: { ...data, contractors: { connect: contractorRefs } },
+      });
 
   revalidatePath("/jobs");
+  revalidatePath("/calendar");
   revalidatePath(`/clients/${d.clientId}`);
   if (id) revalidatePath(`/jobs/${id}`);
   return { ok: true, id: job.id };
+}
+
+/** Reschedule a job to a given day (used by the calendar drag-and-drop). */
+export async function updateJobSchedule(id: string, isoDate: string | null) {
+  await requireUser();
+  const job = await prisma.job.update({
+    where: { id },
+    data: { scheduledDate: isoDate ? new Date(isoDate) : null },
+  });
+  revalidatePath("/calendar");
+  revalidatePath("/jobs");
+  revalidatePath(`/jobs/${id}`);
+  revalidatePath(`/clients/${job.clientId}`);
 }
 
 export async function updateJobStatus(id: string, status: JobStatus) {
@@ -105,4 +124,48 @@ export async function deleteJobPhoto(photoId: string) {
   await requireUser();
   const photo = await prisma.jobPhoto.delete({ where: { id: photoId } });
   revalidatePath(`/jobs/${photo.jobId}`);
+}
+
+const MAX_ATTACHMENT_BYTES = 12 * 1024 * 1024; // 12MB
+
+export async function uploadJobAttachments(
+  jobId: string,
+  formData: FormData
+): Promise<SaveResult> {
+  const user = await requireUser();
+
+  const files = formData
+    .getAll("files")
+    .filter((f): f is File => f instanceof File && f.size > 0);
+
+  if (files.length === 0) {
+    return { ok: false, error: "Please choose at least one file." };
+  }
+  for (const file of files) {
+    if (file.size > MAX_ATTACHMENT_BYTES) {
+      return { ok: false, error: `"${file.name}" is larger than 12MB.` };
+    }
+  }
+
+  const attachments = await Promise.all(
+    files.map(async (file) => ({
+      jobId,
+      filename: file.name,
+      mimeType: file.type || "application/octet-stream",
+      size: file.size,
+      data: Buffer.from(await file.arrayBuffer()),
+      uploadedById: user.id,
+    }))
+  );
+
+  await prisma.jobAttachment.createMany({ data: attachments });
+
+  revalidatePath(`/jobs/${jobId}`);
+  return { ok: true, id: jobId };
+}
+
+export async function deleteJobAttachment(attachmentId: string) {
+  await requireUser();
+  const attachment = await prisma.jobAttachment.delete({ where: { id: attachmentId } });
+  revalidatePath(`/jobs/${attachment.jobId}`);
 }

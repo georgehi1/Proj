@@ -53,14 +53,23 @@ async function main() {
     return;
   }
 
-  const fitter = await prisma.user.upsert({
-    where: { email: "dave@homefixlimited.co.uk" },
-    update: {},
-    create: {
-      name: "Dave (Fitter)",
-      email: "dave@homefixlimited.co.uk",
-      passwordHash,
-      role: "STAFF",
+  // --- Contractors ---
+  const dave = await prisma.contractor.create({
+    data: {
+      name: "Dave Brennan",
+      trade: "Plumber",
+      phone: "07700 900200",
+      email: "dave@example.com",
+      dayRate: money(220),
+    },
+  });
+  const priya = await prisma.contractor.create({
+    data: {
+      name: "Priya Shah",
+      trade: "Tiler",
+      companyName: "Shah Tiling",
+      phone: "07700 900201",
+      dayRate: money(200),
     },
   });
 
@@ -100,7 +109,7 @@ async function main() {
       status: "IN_PROGRESS",
       siteAddress: "14 Oak Avenue, Leatherhead, KT22 7AB",
       scheduledDate: new Date(Date.now() + 2 * 86400000),
-      assignedToId: fitter.id,
+      contractors: { connect: [{ id: dave.id }, { id: priya.id }] },
     },
   });
 
@@ -112,7 +121,7 @@ async function main() {
       status: "SCHEDULED",
       siteAddress: "Various, Leatherhead",
       scheduledDate: new Date(Date.now() + 7 * 86400000),
-      assignedToId: fitter.id,
+      contractors: { connect: [{ id: dave.id }] },
     },
   });
 
@@ -139,7 +148,7 @@ async function main() {
         clientId: smith.id,
         type: "NOTE",
         body: "Customer happy with progress so far.",
-        createdById: fitter.id,
+        createdById: admin.id,
       },
       {
         clientId: acme.id,
