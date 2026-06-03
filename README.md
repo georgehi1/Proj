@@ -1,7 +1,7 @@
 # CRM
 
-A simple, easy-to-use CRM for a small property-maintenance & renovation company.
-It covers the three things the office needs day to day:
+A simple, easy-to-use CRM for a small business. It covers the three things the
+office needs day to day:
 
 - **Job management** — track work from enquiry → quoted → scheduled → in progress → completed.
 - **Invoicing** — build quotes & invoices with line items and VAT, track payment
