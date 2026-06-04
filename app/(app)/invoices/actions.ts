@@ -7,6 +7,9 @@ import { prisma } from "@/lib/db";
 import { requireUser, requireRole } from "@/lib/session";
 import { invoiceSchema, type InvoiceInput } from "@/lib/validation";
 import { computeTotals } from "@/lib/invoice";
+import { renderInvoicePdf } from "@/lib/pdf/render";
+import { sendEmail, emailConfigured } from "@/lib/email";
+import { humanize, formatCurrency, formatDate } from "@/lib/format";
 import type { InvoiceStatus, InvoiceType } from "@prisma/client";
 
 export type SaveResult = { ok: boolean; id?: string; error?: string };
@@ -138,6 +141,70 @@ export async function convertQuoteToInvoice(quoteId: string): Promise<SaveResult
   revalidatePath("/invoices");
   revalidatePath(`/clients/${quote.clientId}`);
   redirect(`/invoices/${invoice.id}`);
+}
+
+export async function sendInvoiceEmail(id: string): Promise<SaveResult> {
+  const user = await requireUser();
+
+  const invoice = await prisma.invoice.findUnique({
+    where: { id },
+    include: { client: true },
+  });
+  if (!invoice) return { ok: false, error: "Invoice not found." };
+  if (!invoice.client.email) {
+    return { ok: false, error: "This client has no email address on file." };
+  }
+
+  const pdf = await renderInvoicePdf(id);
+  if (!pdf) return { ok: false, error: "Could not generate the PDF." };
+
+  const company = await prisma.companySettings.findUnique({ where: { id: 1 } });
+  const companyName = company?.companyName ?? "Homefix Limited";
+  const label = humanize(invoice.type); // "Quote" | "Invoice"
+  const subject = `${label} #${invoice.number} from ${companyName}`;
+  const dueLine = invoice.dueDate ? `\nDue: ${formatDate(invoice.dueDate)}` : "";
+  const text =
+    `Dear ${invoice.client.name},\n\n` +
+    `Please find attached ${label.toLowerCase()} #${invoice.number} for ${formatCurrency(invoice.total)}.` +
+    `${dueLine}\n\n` +
+    `If you have any questions, just reply to this email.\n\n` +
+    `Kind regards,\n${companyName}`;
+
+  try {
+    await sendEmail({
+      to: invoice.client.email,
+      subject,
+      text,
+      attachments: [{ filename: pdf.filename, content: pdf.buffer }],
+    });
+  } catch (e) {
+    return {
+      ok: false,
+      error: e instanceof Error ? e.message : "Failed to send the email.",
+    };
+  }
+
+  // Record it against the client (and job, if linked) and advance a draft.
+  await prisma.communication.create({
+    data: {
+      clientId: invoice.clientId,
+      jobId: invoice.jobId ?? undefined,
+      type: "EMAIL",
+      body: `Emailed ${label.toLowerCase()} #${invoice.number} to ${invoice.client.email}`,
+      createdById: user.id,
+    },
+  });
+  if (invoice.status === "DRAFT") {
+    await prisma.invoice.update({ where: { id }, data: { status: "SENT" } });
+  }
+
+  revalidatePath(`/invoices/${id}`);
+  revalidatePath(`/clients/${invoice.clientId}`);
+  return {
+    ok: true,
+    id,
+    error: emailConfigured ? undefined : "dev-mode: email logged but not sent (no provider configured)",
+  };
 }
 
 export async function deleteInvoice(id: string) {

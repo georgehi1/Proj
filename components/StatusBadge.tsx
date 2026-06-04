@@ -25,7 +25,13 @@ const typeColors: Record<string, string> = {
   INVOICE: "bg-brand-100 text-brand-800",
 };
 
-const palettes = { ...jobColors, ...invoiceColors, ...typeColors };
+const materialColors: Record<string, string> = {
+  NEEDED: "bg-amber-100 text-amber-800",
+  ORDERED: "bg-blue-100 text-blue-800",
+  RECEIVED: "bg-green-100 text-green-800",
+};
+
+const palettes = { ...jobColors, ...invoiceColors, ...typeColors, ...materialColors };
 
 export function StatusBadge({ value }: { value: string }) {
   const color = palettes[value] ?? "bg-slate-100 text-slate-700";

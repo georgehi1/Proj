@@ -66,6 +66,17 @@ export const communicationSchema = z.object({
 });
 export type CommunicationInput = z.infer<typeof communicationSchema>;
 
+export const materialSchema = z.object({
+  name: z.string().trim().min(1, "Name is required"),
+  quantity: z.coerce.number().min(0, "Must be 0 or more").default(1),
+  unit: z.string().trim().optional(),
+  unitCost: z.union([z.coerce.number().min(0), z.literal("")]).optional(),
+  supplier: z.string().trim().optional(),
+  status: z.enum(["NEEDED", "ORDERED", "RECEIVED"]).default("NEEDED"),
+  notes: z.string().trim().optional(),
+});
+export type MaterialInput = z.infer<typeof materialSchema>;
+
 export const lineItemSchema = z.object({
   description: z.string().trim().min(1, "Description is required"),
   quantity: z.coerce.number().min(0, "Must be 0 or more"),

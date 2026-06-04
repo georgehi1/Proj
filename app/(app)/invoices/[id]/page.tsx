@@ -9,6 +9,7 @@ import { currentUser, isAdmin } from "@/lib/session";
 import { formatCurrency, formatDate, humanize } from "@/lib/format";
 import { convertQuoteToInvoice, deleteInvoice } from "../actions";
 import { InvoiceStatusControl } from "./InvoiceStatusControl";
+import { SendInvoiceButton } from "./SendInvoiceButton";
 
 export default async function InvoiceDetailPage({
   params,
@@ -46,6 +47,11 @@ export default async function InvoiceDetailPage({
         action={
           <div className="flex flex-wrap items-center gap-2">
             <InvoiceStatusControl invoiceId={invoice.id} status={invoice.status} />
+            <SendInvoiceButton
+              invoiceId={invoice.id}
+              label={label}
+              clientEmail={invoice.client.email}
+            />
             <LinkButton href={`/invoices/${invoice.id}/pdf`} variant="secondary">
               Download PDF
             </LinkButton>

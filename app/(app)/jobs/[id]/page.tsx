@@ -10,11 +10,12 @@ import {
 import { StatusBadge } from "@/components/StatusBadge";
 import { ConfirmButton } from "@/components/ConfirmButton";
 import { currentUser, isAdmin } from "@/lib/session";
-import { formatCurrency, formatDate, formatDateTime } from "@/lib/format";
+import { formatCurrency, formatDate, formatDateTime, toNumber } from "@/lib/format";
 import { deleteJob } from "../actions";
 import { JobStatusControl } from "./JobStatusControl";
 import { JobPhotos } from "./JobPhotos";
 import { JobAttachments } from "./JobAttachments";
+import { JobMaterials } from "./JobMaterials";
 
 export default async function JobDetailPage({
   params,
@@ -37,6 +38,7 @@ export default async function JobDetailPage({
         orderBy: { createdAt: "asc" },
         select: { id: true, filename: true, size: true },
       },
+      materials: { orderBy: { createdAt: "asc" } },
       communications: {
         orderBy: { createdAt: "desc" },
         include: { createdBy: { select: { name: true } } },
@@ -131,6 +133,23 @@ export default async function JobDetailPage({
           <Card>
             <CardHeader title={`Files${job.attachments.length ? ` (${job.attachments.length})` : ""}`} />
             <JobAttachments jobId={job.id} attachments={job.attachments} />
+          </Card>
+
+          <Card>
+            <CardHeader title={`Materials${job.materials.length ? ` (${job.materials.length})` : ""}`} />
+            <JobMaterials
+              jobId={job.id}
+              materials={job.materials.map((m) => ({
+                id: m.id,
+                name: m.name,
+                quantity: toNumber(m.quantity),
+                unit: m.unit,
+                unitCost: m.unitCost == null ? null : toNumber(m.unitCost),
+                supplier: m.supplier,
+                status: m.status,
+                notes: m.notes,
+              }))}
+            />
           </Card>
 
           <Card>

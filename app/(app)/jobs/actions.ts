@@ -3,12 +3,13 @@
 import { randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { requireUser, requireRole } from "@/lib/session";
-import { jobSchema, type JobInput } from "@/lib/validation";
+import { jobSchema, materialSchema, type JobInput, type MaterialInput } from "@/lib/validation";
 import { attachmentRejectReason } from "@/lib/attachments";
 import { storageEnabled, putObject, deleteObject } from "@/lib/storage";
-import type { JobStatus } from "@prisma/client";
+import type { JobStatus, MaterialStatus } from "@prisma/client";
 
 export type SaveResult = { ok: boolean; id?: string; error?: string };
 
@@ -178,4 +179,50 @@ export async function deleteJobAttachment(attachmentId: string) {
   const attachment = await prisma.jobAttachment.delete({ where: { id: attachmentId } });
   if (attachment.storageKey) await deleteObject(attachment.storageKey);
   revalidatePath(`/jobs/${attachment.jobId}`);
+}
+
+// ─── Materials tracker ────────────────────────────────────────────────────
+
+export async function addJobMaterial(
+  jobId: string,
+  input: MaterialInput
+): Promise<SaveResult> {
+  await requireUser();
+  const parsed = materialSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid data" };
+  }
+  const m = parsed.data;
+  await prisma.jobMaterial.create({
+    data: {
+      jobId,
+      name: m.name,
+      quantity: new Prisma.Decimal(m.quantity),
+      unit: m.unit || null,
+      unitCost:
+        m.unitCost === "" || m.unitCost === undefined
+          ? null
+          : new Prisma.Decimal(Number(m.unitCost).toFixed(2)),
+      supplier: m.supplier || null,
+      status: m.status,
+      notes: m.notes || null,
+    },
+  });
+  revalidatePath(`/jobs/${jobId}`);
+  return { ok: true, id: jobId };
+}
+
+export async function updateJobMaterialStatus(id: string, status: MaterialStatus) {
+  await requireUser();
+  const material = await prisma.jobMaterial.update({
+    where: { id },
+    data: { status },
+  });
+  revalidatePath(`/jobs/${material.jobId}`);
+}
+
+export async function deleteJobMaterial(id: string) {
+  await requireUser();
+  const material = await prisma.jobMaterial.delete({ where: { id } });
+  revalidatePath(`/jobs/${material.jobId}`);
 }

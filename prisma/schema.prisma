@@ -43,6 +43,12 @@ enum InvoiceType {
   INVOICE
 }
 
+enum MaterialStatus {
+  NEEDED
+  ORDERED
+  RECEIVED
+}
+
 enum InvoiceStatus {
   DRAFT
   SENT
@@ -105,9 +111,29 @@ model Job {
   invoices       Invoice[]
   photos         JobPhoto[]
   attachments    JobAttachment[]
+  materials      JobMaterial[]
 
   @@index([clientId])
   @@index([status])
+}
+
+// Materials required for a job — a simple procurement tracker
+// (needed -> ordered -> received) with optional cost estimates.
+model JobMaterial {
+  id        String         @id @default(cuid())
+  jobId     String
+  job       Job            @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  name      String
+  quantity  Decimal        @default(1) @db.Decimal(10, 2)
+  unit      String?
+  unitCost  Decimal?       @db.Decimal(10, 2)
+  supplier  String?
+  status    MaterialStatus @default(NEEDED)
+  notes     String?
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+
+  @@index([jobId])
 }
 
 model Communication {
