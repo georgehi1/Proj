@@ -16,6 +16,7 @@ import { JobStatusControl } from "./JobStatusControl";
 import { JobPhotos } from "./JobPhotos";
 import { JobAttachments } from "./JobAttachments";
 import { JobMaterials } from "./JobMaterials";
+import { MaterialSearch } from "./MaterialSearch";
 
 export default async function JobDetailPage({
   params,
@@ -137,6 +138,7 @@ export default async function JobDetailPage({
 
           <Card>
             <CardHeader title={`Materials${job.materials.length ? ` (${job.materials.length})` : ""}`} />
+            <MaterialSearch jobId={job.id} />
             <JobMaterials
               jobId={job.id}
               materials={job.materials.map((m) => ({
@@ -146,6 +148,8 @@ export default async function JobDetailPage({
                 unit: m.unit,
                 unitCost: m.unitCost == null ? null : toNumber(m.unitCost),
                 supplier: m.supplier,
+                sku: m.sku,
+                sourceUrl: m.sourceUrl,
                 status: m.status,
                 notes: m.notes,
               }))}

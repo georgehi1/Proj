@@ -9,6 +9,7 @@ import { requireUser, requireRole } from "@/lib/session";
 import { jobSchema, materialSchema, type JobInput, type MaterialInput } from "@/lib/validation";
 import { attachmentRejectReason } from "@/lib/attachments";
 import { storageEnabled, putObject, deleteObject } from "@/lib/storage";
+import { searchMaterials } from "@/lib/suppliers";
 import type { JobStatus, MaterialStatus } from "@prisma/client";
 
 export type SaveResult = { ok: boolean; id?: string; error?: string };
@@ -204,12 +205,31 @@ export async function addJobMaterial(
           ? null
           : new Prisma.Decimal(Number(m.unitCost).toFixed(2)),
       supplier: m.supplier || null,
+      sku: m.sku || null,
+      sourceUrl: m.sourceUrl || null,
       status: m.status,
       notes: m.notes || null,
     },
   });
   revalidatePath(`/jobs/${jobId}`);
   return { ok: true, id: jobId };
+}
+
+export type MaterialSearchResult = {
+  ok: boolean;
+  live?: boolean;
+  results?: import("@/lib/suppliers").SupplierResult[];
+  error?: string;
+};
+
+export async function searchSupplierMaterials(query: string): Promise<MaterialSearchResult> {
+  await requireUser();
+  try {
+    const { results, live } = await searchMaterials(query);
+    return { ok: true, live, results };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Search failed" };
+  }
 }
 
 export async function updateJobMaterialStatus(id: string, status: MaterialStatus) {

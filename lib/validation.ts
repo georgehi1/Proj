@@ -72,6 +72,8 @@ export const materialSchema = z.object({
   unit: z.string().trim().optional(),
   unitCost: z.union([z.coerce.number().min(0), z.literal("")]).optional(),
   supplier: z.string().trim().optional(),
+  sku: z.string().trim().optional(),
+  sourceUrl: z.string().trim().url("Invalid URL").or(z.literal("")).optional(),
   status: z.enum(["NEEDED", "ORDERED", "RECEIVED"]).default("NEEDED"),
   notes: z.string().trim().optional(),
 });

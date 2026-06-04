@@ -128,6 +128,8 @@ model JobMaterial {
   unit      String?
   unitCost  Decimal?       @db.Decimal(10, 2)
   supplier  String?
+  sku       String?
+  sourceUrl String?
   status    MaterialStatus @default(NEEDED)
   notes     String?
   createdAt DateTime       @default(now())

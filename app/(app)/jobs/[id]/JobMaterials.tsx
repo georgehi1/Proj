@@ -18,6 +18,8 @@ type Material = {
   unit: string | null;
   unitCost: number | null;
   supplier: string | null;
+  sku: string | null;
+  sourceUrl: string | null;
   status: MaterialStatus;
   notes: string | null;
 };
@@ -103,7 +105,19 @@ export function JobMaterials({
               {materials.map((m) => (
                 <tr key={m.id}>
                   <td className="py-2 pr-3 text-slate-700">
-                    {m.name}
+                    {m.sourceUrl ? (
+                      <a
+                        href={m.sourceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-brand-700 hover:underline"
+                      >
+                        {m.name}
+                      </a>
+                    ) : (
+                      m.name
+                    )}
+                    {m.sku && <span className="ml-1 text-xs text-slate-400">({m.sku})</span>}
                     {m.notes && (
                       <span className="block text-xs text-slate-400">{m.notes}</span>
                     )}
