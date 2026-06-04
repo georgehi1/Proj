@@ -115,7 +115,22 @@ export default async function JobDetailPage({
               </div>
               <div className="col-span-2">
                 <dt className="text-slate-400">Site address</dt>
-                <dd className="text-slate-800">{job.siteAddress || "—"}</dd>
+                <dd className="text-slate-800">
+                  {job.siteAddress ? (
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(job.siteAddress)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-brand-700 hover:underline"
+                      title="Open in Google Maps"
+                    >
+                      <span aria-hidden>📍</span>
+                      {job.siteAddress}
+                    </a>
+                  ) : (
+                    "—"
+                  )}
+                </dd>
               </div>
               {job.description && (
                 <div className="col-span-2">
