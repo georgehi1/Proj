@@ -4,7 +4,6 @@ export type SupplierResult = {
   name: string;
   price: number | null; // GBP, inc VAT where known
   url: string | null; // buy link
-  inStock: boolean | null; // best-effort; null = unknown
   supplier: string; // e.g. "Screwfix"
 };
 

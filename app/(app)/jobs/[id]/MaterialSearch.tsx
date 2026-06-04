@@ -94,11 +94,6 @@ export function MaterialSearch({ jobId }: { jobId: string }) {
               {results.map((r, i) => (
                 <li key={`${r.sku ?? r.name}-${i}`} className="flex items-center gap-3 px-3 py-2 text-sm">
                   <span className="min-w-0 flex-1 truncate text-slate-700">{r.name}</span>
-                  {r.inStock != null && (
-                    <span className={`text-xs ${r.inStock ? "text-green-600" : "text-red-500"}`}>
-                      {r.inStock ? "In stock" : "Out of stock"}
-                    </span>
-                  )}
                   <span className="w-16 text-right text-slate-800">
                     {r.price == null ? "—" : formatCurrency(r.price)}
                   </span>

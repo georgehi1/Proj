@@ -25,17 +25,6 @@ function toNumber(v: unknown): number | null {
   return null;
 }
 
-function toStock(item: Record<string, unknown>): boolean | null {
-  if (typeof item.inStock === "boolean") return item.inStock;
-  const avail = item.availability ?? item.stockStatus ?? item.stock;
-  if (typeof avail === "string") {
-    if (/out of stock|unavailable/i.test(avail)) return false;
-    if (/in stock|available/i.test(avail)) return true;
-  }
-  if (typeof avail === "number") return avail > 0;
-  return null;
-}
-
 function normalise(raw: unknown): SupplierResult | null {
   if (!raw || typeof raw !== "object") return null;
   const item = raw as Record<string, unknown>;
@@ -47,7 +36,6 @@ function normalise(raw: unknown): SupplierResult | null {
     name,
     price: toNumber(item.price ?? item.priceIncVat ?? item.currentPrice ?? item.priceVat),
     url: url ?? screwfixSearchUrl(name),
-    inStock: toStock(item),
     supplier: "Screwfix",
   };
 }

@@ -51,7 +51,6 @@ export const catalogueProvider: SupplierProvider = {
         name: item.name,
         price: item.price,
         url: screwfixSearchUrl(item.name),
-        inStock: null,
         supplier: "Screwfix",
       }));
   },
