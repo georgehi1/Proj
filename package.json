@@ -25,6 +25,7 @@
     "@hookform/resolvers": "^3.9.1",
     "@prisma/client": "^6.2.1",
     "@react-pdf/renderer": "^4.1.6",
+    "@sentry/nextjs": "^10.56.0",
     "bcryptjs": "^2.4.3",
     "date-fns": "^4.1.0",
     "mammoth": "^1.12.0",

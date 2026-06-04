@@ -25,6 +25,7 @@ office needs day to day:
 - [Prisma](https://www.prisma.io) ORM + PostgreSQL
 - [Auth.js](https://authjs.dev) (NextAuth v5) — email/password sign-in
 - [@react-pdf/renderer](https://react-pdf.org) for invoice/quote PDFs
+- [Sentry](https://sentry.io) for error monitoring (optional — off until a DSN is set)
 
 ## Getting started
 
@@ -128,10 +129,14 @@ the migrations automatically on deploy (`vercel.json` sets the build command to
    - **Transaction pooler** (port `6543`) → `DATABASE_URL` (append
      `?pgbouncer=true&connection_limit=1`). This is what the serverless app uses.
    - **Direct connection** (port `5432`) → `DIRECT_URL`. Used only for migrations.
-2. **Import the repo into Vercel** and set these environment variables:
+2. **Import the repo into Vercel** and set these environment variables (scope
+   them to **Production** and **Preview** separately, ideally with a different
+   database and `AUTH_SECRET` per environment):
    - `DATABASE_URL` and `DIRECT_URL` (from step 1)
    - `AUTH_SECRET` (`openssl rand -base64 32`)
    - `ADMIN_EMAIL` and `ADMIN_PASSWORD` (your real first-login credentials)
+   - `NEXT_PUBLIC_APP_ENV` (`production` / `preview` — tags client-side errors)
+   - `NEXT_PUBLIC_SENTRY_DSN` (optional — enables Sentry; see below)
    - `ANTHROPIC_API_KEY` (optional — only for AI document import)
    - Leave `SEED_DEMO` unset in production.
 3. **Deploy.** The build runs `prisma migrate deploy`, creating all tables.
@@ -142,6 +147,12 @@ the migrations automatically on deploy (`vercel.json` sets the build command to
 > Why two URLs? Supabase's pooler (PgBouncer) is required for serverless
 > connection limits, but Prisma migrations need a direct connection — hence
 > `DATABASE_URL` (pooled) and `DIRECT_URL` (direct).
+
+### Environments, monitoring & Docker
+
+Dev / preview / production setup, the `APP_ENV` tag, enabling **Sentry**, and
+running the **production Docker image** (`Dockerfile` + `docker-compose.prod.yml`)
+are all documented in **[docs/environments.md](docs/environments.md)**.
 
 ## Not included yet (natural next steps)
 
