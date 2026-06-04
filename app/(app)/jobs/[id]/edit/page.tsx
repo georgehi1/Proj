@@ -31,6 +31,7 @@ export default async function EditJobPage({
           clientId: job.clientId,
           title: job.title,
           description: job.description ?? "",
+          notes: job.notes ?? "",
           status: job.status,
           siteAddress: job.siteAddress ?? "",
           scheduledDate: job.scheduledDate

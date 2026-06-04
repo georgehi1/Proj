@@ -123,6 +123,12 @@ export default async function JobDetailPage({
                   <dd className="whitespace-pre-wrap text-slate-800">{job.description}</dd>
                 </div>
               )}
+              {job.notes && (
+                <div className="col-span-2">
+                  <dt className="text-slate-400">Additional notes</dt>
+                  <dd className="whitespace-pre-wrap text-slate-800">{job.notes}</dd>
+                </div>
+              )}
             </dl>
           </Card>
 

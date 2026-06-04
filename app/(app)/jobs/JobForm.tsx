@@ -58,6 +58,7 @@ export function JobForm({
       clientId: "",
       title: "",
       description: "",
+      notes: "",
       status: "ENQUIRY",
       siteAddress: "",
       scheduledDate: "",
@@ -99,6 +100,9 @@ export function JobForm({
         </Field>
         <Field label="Description" htmlFor="description">
           <Textarea id="description" {...register("description")} />
+        </Field>
+        <Field label="Additional notes" htmlFor="notes">
+          <Textarea id="notes" {...register("notes")} />
         </Field>
         <div className="grid gap-4 sm:grid-cols-2">
           <Field label="Status" htmlFor="status">

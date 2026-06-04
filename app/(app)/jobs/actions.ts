@@ -33,6 +33,7 @@ export async function saveJob(
     clientId: d.clientId,
     title: d.title,
     description: clean(d.description),
+    notes: clean(d.notes),
     status: d.status,
     siteAddress: clean(d.siteAddress),
     scheduledDate: d.scheduledDate ? new Date(d.scheduledDate) : null,

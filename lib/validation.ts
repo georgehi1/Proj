@@ -17,6 +17,7 @@ export const jobSchema = z.object({
   clientId: z.string().min(1, "Please choose a client"),
   title: z.string().trim().min(1, "Title is required"),
   description: z.string().trim().optional(),
+  notes: z.string().trim().optional(),
   status: z.enum([
     "ENQUIRY",
     "QUOTED",
