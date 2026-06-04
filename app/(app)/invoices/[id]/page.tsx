@@ -66,7 +66,7 @@ export default async function InvoiceDetailPage({
       />
 
       {invoice.type === "QUOTE" && (
-        <Card className="mb-6 flex items-center justify-between gap-4 p-4">
+        <Card className="mb-6 flex flex-col items-start gap-4 p-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-slate-600">
             Quote accepted? Convert it into an invoice — line items are copied over.
           </p>
@@ -82,7 +82,8 @@ export default async function InvoiceDetailPage({
         <div className="lg:col-span-2">
           <Card>
             <CardHeader title="Line items" />
-            <table className="w-full text-sm">
+            <div className="overflow-x-auto">
+            <table className="w-full min-w-[32rem] text-sm">
               <thead className="text-left text-xs uppercase tracking-wide text-slate-400">
                 <tr>
                   <th className="px-5 py-2 font-medium">Description</th>
@@ -106,6 +107,7 @@ export default async function InvoiceDetailPage({
                 ))}
               </tbody>
             </table>
+            </div>
             <div className="flex flex-col items-end gap-1 border-t border-slate-100 px-5 py-4 text-sm">
               <div className="flex w-56 justify-between text-slate-600">
                 <span>Subtotal</span>

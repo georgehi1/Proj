@@ -105,12 +105,15 @@ export function CalendarBoard({
 
   const gridCols = view === "day" ? "grid-cols-1" : "grid-cols-7";
   const minH = view === "month" ? "min-h-28" : "min-h-[60vh]";
+  // On phones a 7-column grid can't fit; let month/week views scroll sideways
+  // while keeping the desktop layout full-width.
+  const minW = view === "day" ? "" : "min-w-[44rem]";
 
   return (
     <div className={`flex flex-col gap-4 ${isPending ? "opacity-70" : ""} lg:flex-row`}>
-      <div className="flex-1 overflow-hidden rounded-xl border border-slate-200 bg-white">
+      <div className="flex-1 overflow-x-auto rounded-xl border border-slate-200 bg-white">
         {view !== "day" && (
-          <div className="grid grid-cols-7 border-b border-slate-200 bg-slate-50 text-xs font-medium uppercase tracking-wide text-slate-500">
+          <div className={`grid grid-cols-7 border-b border-slate-200 bg-slate-50 text-xs font-medium uppercase tracking-wide text-slate-500 ${minW}`}>
             {WEEKDAYS.map((d) => (
               <div key={d} className="px-2 py-2 text-center">
                 {d}
@@ -118,7 +121,7 @@ export function CalendarBoard({
             ))}
           </div>
         )}
-        <div className={`grid ${gridCols}`}>
+        <div className={`grid ${gridCols} ${minW}`}>
           {days.map((day) => {
             const dayJobs = jobsByDay[day.key] ?? [];
             const isOver = over === day.key;

@@ -32,14 +32,14 @@ export default async function ContractorLayout({
   }
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen flex-col lg:flex-row">
       <ContractorSidebar
         userName={session.user.name ?? "Contractor"}
         userEmail={session.user.email ?? ""}
         signOut={handleSignOut}
         signOutEverywhere={handleSignOutEverywhere}
       />
-      <main className="flex-1 px-6 py-8 lg:px-10">
+      <main className="flex-1 px-4 py-6 sm:px-6 sm:py-8 lg:px-10">
         <div className="mx-auto max-w-5xl">{children}</div>
       </main>
     </div>

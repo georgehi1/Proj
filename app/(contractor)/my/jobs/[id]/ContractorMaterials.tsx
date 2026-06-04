@@ -35,8 +35,8 @@ export function ContractorMaterials({ materials }: { materials: Material[] }) {
   }
 
   return (
-    <div className="px-5 py-4">
-      <table className="w-full text-sm">
+    <div className="overflow-x-auto px-5 py-4">
+      <table className="w-full min-w-[28rem] text-sm">
         <thead className="text-left text-xs uppercase tracking-wide text-slate-400">
           <tr>
             <th className="py-2 pr-3 font-medium">Material</th>

@@ -58,7 +58,7 @@ export default async function ContractorJobDetail({
         <div className="space-y-6 lg:col-span-2">
           <Card>
             <CardHeader title="Details" />
-            <dl className="grid grid-cols-2 gap-x-6 gap-y-4 px-5 py-4 text-sm">
+            <dl className="grid grid-cols-1 gap-x-6 gap-y-4 px-5 py-4 text-sm sm:grid-cols-2">
               <div>
                 <dt className="text-slate-400">Client</dt>
                 <dd className="text-slate-800">{job.client.name}</dd>
