@@ -73,6 +73,21 @@ async function main() {
     },
   });
 
+  // Give Dave a portal login so the contractor view is demoable.
+  const daveLogin = await prisma.user.create({
+    data: {
+      name: dave.name,
+      email: "dave@example.com",
+      passwordHash: await bcrypt.hash("password123", 10),
+      role: "CONTRACTOR",
+    },
+  });
+  await prisma.contractor.update({
+    where: { id: dave.id },
+    data: { userId: daveLogin.id },
+  });
+  console.log("Contractor login ready: dave@example.com / password123");
+
   // Demo availability: Dave free for the next 4 weeks; Priya free for 2 weeks
   // with a few days off in the middle.
   const today = new Date();

@@ -18,9 +18,13 @@ const STATUSES: JobStatus[] = [
 export function JobStatusControl({
   jobId,
   status,
+  statuses = STATUSES,
 }: {
   jobId: string;
   status: JobStatus;
+  // Optionally restrict the selectable statuses (e.g. the contractor portal
+  // only offers the on-site transitions).
+  statuses?: JobStatus[];
 }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -38,7 +42,7 @@ export function JobStatusControl({
         });
       }}
     >
-      {STATUSES.map((s) => (
+      {statuses.map((s) => (
         <option key={s} value={s}>
           {s.replace(/_/g, " ")}
         </option>

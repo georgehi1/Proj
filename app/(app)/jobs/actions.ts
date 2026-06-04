@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { requireUser, requireRole } from "@/lib/session";
+import { assertJobAccess } from "@/lib/contractor";
 import { jobSchema, materialSchema, type JobInput, type MaterialInput } from "@/lib/validation";
 import { attachmentRejectReason } from "@/lib/attachments";
 import { storageEnabled, putObject, deleteObject } from "@/lib/storage";
@@ -23,7 +24,7 @@ export async function saveJob(
   id: string | null,
   input: JobInput
 ): Promise<SaveResult> {
-  await requireUser();
+  await requireRole("ADMIN", "STAFF");
   const parsed = jobSchema.safeParse(input);
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid data" };
@@ -58,7 +59,7 @@ export async function saveJob(
 
 /** Reschedule a job to a given day (used by the calendar drag-and-drop). */
 export async function updateJobSchedule(id: string, isoDate: string | null) {
-  await requireUser();
+  await requireRole("ADMIN", "STAFF");
   const job = await prisma.job.update({
     where: { id },
     data: { scheduledDate: isoDate ? new Date(isoDate) : null },
@@ -69,11 +70,21 @@ export async function updateJobSchedule(id: string, isoDate: string | null) {
   revalidatePath(`/clients/${job.clientId}`);
 }
 
+// On-site statuses a contractor is allowed to set themselves. Office-only
+// statuses (ENQUIRY/QUOTED/CANCELLED) stay with the office.
+const CONTRACTOR_STATUSES: JobStatus[] = ["SCHEDULED", "IN_PROGRESS", "COMPLETED"];
+
 export async function updateJobStatus(id: string, status: JobStatus) {
-  await requireUser();
+  const user = await requireUser();
+  await assertJobAccess(user, id);
+  if (user.role === "CONTRACTOR" && !CONTRACTOR_STATUSES.includes(status)) {
+    throw new Error("Not authorised");
+  }
   const job = await prisma.job.update({ where: { id }, data: { status } });
   revalidatePath(`/jobs/${id}`);
   revalidatePath("/jobs");
+  revalidatePath("/my");
+  revalidatePath(`/my/jobs/${id}`);
   revalidatePath(`/clients/${job.clientId}`);
 }
 
@@ -91,7 +102,8 @@ export async function uploadJobPhotos(
   jobId: string,
   formData: FormData
 ): Promise<SaveResult> {
-  await requireUser();
+  const user = await requireUser();
+  await assertJobAccess(user, jobId);
 
   const files = formData
     .getAll("photos")
@@ -123,20 +135,28 @@ export async function uploadJobPhotos(
   await prisma.jobPhoto.createMany({ data: photos });
 
   revalidatePath(`/jobs/${jobId}`);
+  revalidatePath(`/my/jobs/${jobId}`);
   return { ok: true, id: jobId };
 }
 
 export async function deleteJobPhoto(photoId: string) {
-  await requireUser();
-  const photo = await prisma.jobPhoto.delete({ where: { id: photoId } });
+  const user = await requireUser();
+  const photo = await prisma.jobPhoto.findUnique({
+    where: { id: photoId },
+    select: { jobId: true },
+  });
+  if (!photo) return;
+  await assertJobAccess(user, photo.jobId);
+  await prisma.jobPhoto.delete({ where: { id: photoId } });
   revalidatePath(`/jobs/${photo.jobId}`);
+  revalidatePath(`/my/jobs/${photo.jobId}`);
 }
 
 export async function uploadJobAttachments(
   jobId: string,
   formData: FormData
 ): Promise<SaveResult> {
-  const user = await requireUser();
+  const user = await requireRole("ADMIN", "STAFF");
 
   const files = formData
     .getAll("files")
@@ -177,7 +197,7 @@ export async function uploadJobAttachments(
 }
 
 export async function deleteJobAttachment(attachmentId: string) {
-  await requireUser();
+  await requireRole("ADMIN", "STAFF");
   const attachment = await prisma.jobAttachment.delete({ where: { id: attachmentId } });
   if (attachment.storageKey) await deleteObject(attachment.storageKey);
   revalidatePath(`/jobs/${attachment.jobId}`);
@@ -189,7 +209,7 @@ export async function addJobMaterial(
   jobId: string,
   input: MaterialInput
 ): Promise<SaveResult> {
-  await requireUser();
+  await requireRole("ADMIN", "STAFF");
   const parsed = materialSchema.safeParse(input);
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid data" };
@@ -224,7 +244,7 @@ export type MaterialSearchResult = {
 };
 
 export async function searchSupplierMaterials(query: string): Promise<MaterialSearchResult> {
-  await requireUser();
+  await requireRole("ADMIN", "STAFF");
   try {
     const { results, live } = await searchMaterials(query);
     return { ok: true, live, results };
@@ -234,16 +254,23 @@ export async function searchSupplierMaterials(query: string): Promise<MaterialSe
 }
 
 export async function updateJobMaterialStatus(id: string, status: MaterialStatus) {
-  await requireUser();
+  const user = await requireUser();
+  const existing = await prisma.jobMaterial.findUnique({
+    where: { id },
+    select: { jobId: true },
+  });
+  if (!existing) throw new Error("Not found");
+  await assertJobAccess(user, existing.jobId);
   const material = await prisma.jobMaterial.update({
     where: { id },
     data: { status },
   });
   revalidatePath(`/jobs/${material.jobId}`);
+  revalidatePath(`/my/jobs/${material.jobId}`);
 }
 
 export async function deleteJobMaterial(id: string) {
-  await requireUser();
+  await requireRole("ADMIN", "STAFF");
   const material = await prisma.jobMaterial.delete({ where: { id } });
   revalidatePath(`/jobs/${material.jobId}`);
 }

@@ -15,6 +15,7 @@ datasource db {
 enum Role {
   ADMIN
   STAFF
+  CONTRACTOR
 }
 
 enum ClientType {
@@ -70,6 +71,8 @@ model User {
 
   communications      Communication[] @relation("CommunicationAuthor")
   uploadedAttachments JobAttachment[] @relation("AttachmentUploader")
+  // A CONTRACTOR-role user is the login for exactly one Contractor record.
+  contractor          Contractor?     @relation("ContractorLogin")
 }
 
 model Client {
@@ -211,7 +214,9 @@ model JobPhoto {
   @@index([jobId])
 }
 
-// External tradespeople who carry out jobs. Office-managed records (no login).
+// External tradespeople who carry out jobs. Office-managed records that may
+// optionally be given a login (a linked CONTRACTOR-role User) so the
+// tradesperson can see their own jobs and schedule via the contractor portal.
 model Contractor {
   id          String   @id @default(cuid())
   name        String
@@ -222,6 +227,9 @@ model Contractor {
   dayRate     Decimal? @db.Decimal(10, 2)
   notes       String?
   active      Boolean  @default(true)
+  // Optional self-service login. Null = office-managed only (no portal access).
+  userId      String?  @unique
+  user        User?    @relation("ContractorLogin", fields: [userId], references: [id], onDelete: SetNull)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

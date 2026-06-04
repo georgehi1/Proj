@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
+import { assertJobAccess } from "@/lib/contractor";
 
 export const runtime = "nodejs";
 
@@ -14,6 +15,14 @@ export async function GET(
   }
 
   const { id, photoId } = await params;
+
+  // Office roles see any job's photos; a contractor only their assigned jobs'.
+  try {
+    await assertJobAccess(session.user, id);
+  } catch {
+    return new Response("Not found", { status: 404 });
+  }
+
   const photo = await prisma.jobPhoto.findFirst({
     where: { id: photoId, jobId: id },
   });

@@ -8,6 +8,7 @@ import { currentUser, isAdmin } from "@/lib/session";
 import { formatCurrency, formatDate } from "@/lib/format";
 import { deleteContractor } from "../actions";
 import { AvailabilityManager } from "./AvailabilityManager";
+import { ContractorLoginManager } from "./ContractorLoginManager";
 
 export default async function ContractorDetailPage({
   params,
@@ -27,6 +28,7 @@ export default async function ContractorDetailPage({
         orderBy: { startDate: "asc" },
         select: { id: true, kind: true, startDate: true, endDate: true, note: true },
       },
+      user: { select: { email: true } },
     },
   });
   if (!contractor) notFound();
@@ -106,6 +108,18 @@ export default async function ContractorDetailPage({
               )}
             </dl>
           </Card>
+
+          {admin && (
+            <Card className="mt-6">
+              <CardHeader title="Portal login" />
+              <ContractorLoginManager
+                contractorId={contractor.id}
+                hasLogin={Boolean(contractor.userId)}
+                loginEmail={contractor.user?.email ?? null}
+                contractorEmail={contractor.email}
+              />
+            </Card>
+          )}
         </div>
 
         <div className="space-y-6 lg:col-span-2">

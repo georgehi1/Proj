@@ -1,17 +1,17 @@
 import { redirect } from "next/navigation";
 import { auth, signOut } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { Sidebar } from "@/components/Sidebar";
+import { ContractorSidebar } from "@/components/ContractorSidebar";
 
-export default async function AppLayout({
+export default async function ContractorLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const session = await auth();
   if (!session?.user) redirect("/login");
-  // Contractors get a confined portal; keep them out of the office app.
-  if (session.user.role === "CONTRACTOR") redirect("/my");
+  // This area is contractors-only; office staff are sent back to the app.
+  if (session.user.role !== "CONTRACTOR") redirect("/");
 
   async function handleSignOut() {
     "use server";
@@ -33,15 +33,14 @@ export default async function AppLayout({
 
   return (
     <div className="flex min-h-screen">
-      <Sidebar
-        userName={session.user.name ?? "User"}
+      <ContractorSidebar
+        userName={session.user.name ?? "Contractor"}
         userEmail={session.user.email ?? ""}
-        isAdmin={session.user.role === "ADMIN"}
         signOut={handleSignOut}
         signOutEverywhere={handleSignOutEverywhere}
       />
       <main className="flex-1 px-6 py-8 lg:px-10">
-        <div className="mx-auto max-w-6xl">{children}</div>
+        <div className="mx-auto max-w-5xl">{children}</div>
       </main>
     </div>
   );
