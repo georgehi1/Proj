@@ -1,8 +1,7 @@
-# Homefix CRM — notes for Claude
+# CRM — notes for Claude
 
-Small-business CRM for Homefix Limited (property maintenance, Leatherhead).
-Features: job management, invoicing (quotes + invoices with VAT & PDF), and a
-per-client communication log.
+Small-business CRM. Features: job management, invoicing (quotes + invoices with
+VAT & PDF), and a per-client communication log.
 
 ## Stack
 Next.js 16 (App Router, Server Actions) · TypeScript · Tailwind v4 · Prisma +
@@ -27,7 +26,7 @@ PostgreSQL · Auth.js v5 (credentials) · @react-pdf/renderer.
 
 ## Local dev
 `docker compose up -d` (or any Postgres) → `npm run db:migrate` → `npm run db:seed`
-→ `npm run dev`. Seeded login: admin@homefixlimited.co.uk / password123.
+→ `npm run dev`. Seeded login uses `ADMIN_EMAIL` / `ADMIN_PASSWORD` (see `.env.example`).
 
 ## Before pushing
 Run `npm run typecheck` and `npm run build`. With the server running,
