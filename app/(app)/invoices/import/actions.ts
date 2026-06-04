@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import mammoth from "mammoth";
 import { Prisma, type InvoiceType } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/session";
+import { requireRole } from "@/lib/session";
 import { computeTotals } from "@/lib/invoice";
 import {
   runExtraction,
@@ -77,7 +77,7 @@ async function findOrCreateClient(client: {
 }
 
 export async function extractDocument(formData: FormData): Promise<ImportResult> {
-  await requireUser();
+  await requireRole("ADMIN", "STAFF");
 
   if (!process.env.ANTHROPIC_API_KEY) {
     return {

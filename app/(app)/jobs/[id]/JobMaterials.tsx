@@ -4,6 +4,7 @@ import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Input, Select } from "@/components/ui";
 import { formatCurrency } from "@/lib/format";
+import { safeExternalHref } from "@/lib/http";
 import {
   addJobMaterial,
   updateJobMaterialStatus,
@@ -105,9 +106,9 @@ export function JobMaterials({
               {materials.map((m) => (
                 <tr key={m.id}>
                   <td className="py-2 pr-3 text-slate-700">
-                    {m.sourceUrl ? (
+                    {safeExternalHref(m.sourceUrl) ? (
                       <a
-                        href={m.sourceUrl}
+                        href={safeExternalHref(m.sourceUrl)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-brand-700 hover:underline"

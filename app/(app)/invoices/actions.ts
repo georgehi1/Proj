@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { requireUser, requireRole } from "@/lib/session";
+import { requireRole } from "@/lib/session";
 import { invoiceSchema, type InvoiceInput } from "@/lib/validation";
 import { computeTotals } from "@/lib/invoice";
 import { renderInvoicePdf } from "@/lib/pdf/render";
@@ -36,7 +36,7 @@ export async function saveInvoice(
   id: string | null,
   input: InvoiceInput
 ): Promise<SaveResult> {
-  await requireUser();
+  await requireRole("ADMIN", "STAFF");
   const parsed = invoiceSchema.safeParse(input);
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid data" };
@@ -95,7 +95,7 @@ export async function saveInvoice(
 }
 
 export async function updateInvoiceStatus(id: string, status: InvoiceStatus) {
-  await requireUser();
+  await requireRole("ADMIN", "STAFF");
   const inv = await prisma.invoice.update({ where: { id }, data: { status } });
   revalidatePath("/invoices");
   revalidatePath(`/invoices/${id}`);
@@ -104,7 +104,7 @@ export async function updateInvoiceStatus(id: string, status: InvoiceStatus) {
 
 /** Turn an accepted quote into a draft invoice, copying its line items. */
 export async function convertQuoteToInvoice(quoteId: string): Promise<SaveResult> {
-  await requireUser();
+  await requireRole("ADMIN", "STAFF");
   const quote = await prisma.invoice.findUnique({
     where: { id: quoteId },
     include: { lineItems: { orderBy: { position: "asc" } } },
@@ -144,7 +144,7 @@ export async function convertQuoteToInvoice(quoteId: string): Promise<SaveResult
 }
 
 export async function sendInvoiceEmail(id: string): Promise<SaveResult> {
-  const user = await requireUser();
+  const user = await requireRole("ADMIN", "STAFF");
 
   const invoice = await prisma.invoice.findUnique({
     where: { id },

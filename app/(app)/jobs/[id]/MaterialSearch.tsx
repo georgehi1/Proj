@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Input } from "@/components/ui";
 import { formatCurrency } from "@/lib/format";
+import { safeExternalHref } from "@/lib/http";
 import { searchSupplierMaterials, addJobMaterial } from "../actions";
 import type { SupplierResult } from "@/lib/suppliers";
 
@@ -97,9 +98,9 @@ export function MaterialSearch({ jobId }: { jobId: string }) {
                   <span className="w-16 text-right text-slate-800">
                     {r.price == null ? "—" : formatCurrency(r.price)}
                   </span>
-                  {r.url && (
+                  {safeExternalHref(r.url) && (
                     <a
-                      href={r.url}
+                      href={safeExternalHref(r.url)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-xs font-medium text-brand-600 hover:underline"

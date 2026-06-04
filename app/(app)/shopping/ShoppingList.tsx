@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Card, CardHeader } from "@/components/ui";
 import { StatusBadge } from "@/components/StatusBadge";
 import { formatCurrency } from "@/lib/format";
+import { safeExternalHref } from "@/lib/http";
 import { lineTotal, type ShoppingGroup, type ShoppingItem } from "@/lib/shopping";
 import { setMaterialStatus } from "./actions";
 import type { MaterialStatus } from "@prisma/client";
@@ -23,6 +24,7 @@ function ItemRow({ item }: { item: ShoppingItem }) {
   }
 
   const total = lineTotal(item);
+  const sourceHref = safeExternalHref(item.sourceUrl);
 
   return (
     <li className="flex items-start gap-3 px-5 py-3">
@@ -36,9 +38,9 @@ function ItemRow({ item }: { item: ShoppingItem }) {
       <div className="min-w-0 flex-1">
         <div className={`flex flex-wrap items-center gap-x-2 gap-y-1 ${done ? "opacity-50" : ""}`}>
           <span className={`text-sm text-slate-800 ${done ? "line-through" : ""}`}>
-            {item.sourceUrl ? (
+            {sourceHref ? (
               <a
-                href={item.sourceUrl}
+                href={sourceHref}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-brand-700 hover:underline"

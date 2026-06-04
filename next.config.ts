@@ -9,6 +9,27 @@ const nextConfig: NextConfig = {
     // Allow job photo uploads (default Server Action body limit is 1MB).
     serverActions: { bodySizeLimit: "12mb" },
   },
+  // Baseline security headers applied to every response. (A strict CSP is left
+  // out for now as it needs per-request nonces to avoid breaking Next/Turbopack
+  // inline scripts.)
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          // Clickjacking: the app is never meant to be framed.
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "Content-Security-Policy", value: "frame-ancestors 'none'" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          {
+            key: "Permissions-Policy",
+            value: "camera=(), microphone=(), geolocation=()",
+          },
+        ],
+      },
+    ];
+  },
 };
 
 export default withSentryConfig(nextConfig, {

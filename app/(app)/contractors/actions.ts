@@ -6,7 +6,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { requireUser, requireRole } from "@/lib/session";
+import { requireRole } from "@/lib/session";
 import {
   contractorSchema,
   availabilitySchema,
@@ -25,7 +25,7 @@ export async function saveContractor(
   id: string | null,
   input: ContractorInput
 ): Promise<SaveResult> {
-  await requireUser();
+  await requireRole("ADMIN", "STAFF");
   const parsed = contractorSchema.safeParse(input);
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid data" };
@@ -65,7 +65,7 @@ export async function addAvailability(
   contractorId: string,
   input: AvailabilityInput
 ): Promise<SaveResult> {
-  await requireUser();
+  await requireRole("ADMIN", "STAFF");
   const parsed = availabilitySchema.safeParse(input);
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid data" };
@@ -86,7 +86,7 @@ export async function addAvailability(
 }
 
 export async function deleteAvailability(id: string) {
-  await requireUser();
+  await requireRole("ADMIN", "STAFF");
   const window = await prisma.contractorAvailability.delete({ where: { id } });
   revalidatePath(`/contractors/${window.contractorId}`);
   revalidatePath("/calendar");

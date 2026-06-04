@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { assertJobAccess } from "@/lib/contractor";
+import { contentDisposition, FILE_SECURITY_HEADERS } from "@/lib/http";
 
 export const runtime = "nodejs";
 
@@ -32,10 +33,11 @@ export async function GET(
 
   return new Response(new Uint8Array(photo.data), {
     headers: {
+      ...FILE_SECURITY_HEADERS,
       "Content-Type": photo.mimeType,
       "Content-Length": String(photo.size),
       "Cache-Control": "private, max-age=3600",
-      "Content-Disposition": `inline; filename="${photo.filename}"`,
+      "Content-Disposition": contentDisposition("inline", photo.filename),
     },
   });
 }

@@ -74,7 +74,13 @@ export const materialSchema = z.object({
   unitCost: z.union([z.coerce.number().min(0), z.literal("")]).optional(),
   supplier: z.string().trim().optional(),
   sku: z.string().trim().optional(),
-  sourceUrl: z.string().trim().url("Invalid URL").or(z.literal("")).optional(),
+  sourceUrl: z
+    .string()
+    .trim()
+    .url("Invalid URL")
+    .refine((u) => /^https?:\/\//i.test(u), "URL must start with http:// or https://")
+    .or(z.literal(""))
+    .optional(),
   status: z.enum(["NEEDED", "ORDERED", "RECEIVED"]).default("NEEDED"),
   notes: z.string().trim().optional(),
 });

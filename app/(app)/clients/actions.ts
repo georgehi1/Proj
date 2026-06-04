@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { requireUser, requireRole } from "@/lib/session";
+import { requireRole } from "@/lib/session";
 import {
   clientSchema,
   communicationSchema,
@@ -29,7 +29,7 @@ export async function saveClient(
   id: string | null,
   input: ClientInput
 ): Promise<SaveResult> {
-  await requireUser();
+  await requireRole("ADMIN", "STAFF");
   const parsed = clientSchema.safeParse(input);
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid data" };
@@ -64,7 +64,7 @@ export async function deleteClient(id: string) {
 }
 
 export async function addCommunication(input: CommunicationInput): Promise<SaveResult> {
-  const user = await requireUser();
+  const user = await requireRole("ADMIN", "STAFF");
   const parsed = communicationSchema.safeParse(input);
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid data" };
@@ -92,7 +92,7 @@ export async function addCommunication(input: CommunicationInput): Promise<SaveR
  * unit-tested independently of the database.
  */
 export async function importClients(rows: ImportClientRow[]): Promise<ImportResult> {
-  await requireUser();
+  await requireRole("ADMIN", "STAFF");
 
   const existing = await prisma.client.findMany({
     select: { name: true, email: true, phone: true },
