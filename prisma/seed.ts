@@ -8,7 +8,7 @@ function money(n: number) {
 }
 
 async function main() {
-  console.log("Seeding Homefix CRM…");
+  console.log("Seeding Homefix Renovations…");
 
   // --- Company settings (single row, id = 1) ---
   await prisma.companySettings.upsert({
@@ -16,7 +16,7 @@ async function main() {
     update: {},
     create: {
       id: 1,
-      companyName: "Homefix Limited",
+      companyName: "Homefix Renovations",
       town: "Leatherhead",
       postcode: "KT22",
       phone: "01372 372470",

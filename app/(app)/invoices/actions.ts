@@ -159,7 +159,7 @@ export async function sendInvoiceEmail(id: string): Promise<SaveResult> {
   if (!pdf) return { ok: false, error: "Could not generate the PDF." };
 
   const company = await prisma.companySettings.findUnique({ where: { id: 1 } });
-  const companyName = company?.companyName ?? "Homefix Limited";
+  const companyName = company?.companyName ?? "Homefix Renovations";
   const label = humanize(invoice.type); // "Quote" | "Invoice"
   const subject = `${label} #${invoice.number} from ${companyName}`;
   const dueLine = invoice.dueDate ? `\nDue: ${formatDate(invoice.dueDate)}` : "";

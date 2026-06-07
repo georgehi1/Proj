@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { LogoMark } from "@/components/Logo";
 
 export type NavItem = { href: string; label: string };
 
@@ -40,8 +41,8 @@ export function SidebarNav({
 
   const brand = (
     <div className="flex items-center gap-2 px-5 py-5">
-      <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-600 text-sm font-bold text-white">
-        HF
+      <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
+        <LogoMark className="h-6 w-6" />
       </span>
       <div className="leading-tight">
         <div className="text-sm font-semibold text-slate-900">{brandTitle}</div>
@@ -98,8 +99,8 @@ export function SidebarNav({
       {/* Mobile top bar */}
       <header className="sticky top-0 z-30 flex items-center justify-between border-b border-slate-200 bg-white px-4 py-3 lg:hidden">
         <div className="flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600 text-xs font-bold text-white">
-            HF
+          <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
+            <LogoMark className="h-5 w-5" />
           </span>
           <span className="text-sm font-semibold text-slate-900">{brandTitle}</span>
         </div>

@@ -40,7 +40,7 @@ const SYSTEM_PROMPT = `You extract structured data from property-maintenance quo
 
 Rules:
 - Decide documentType: "QUOTE" for quotations/estimates, "INVOICE" for invoices/bills.
-- Extract the customer (the bill-to / client), NOT the supplier "Homefix Limited".
+- Extract the customer (the bill-to / client), NOT the supplier "Homefix Renovations".
 - For each line item, capture description, quantity (default 1 if not stated) and unitPrice as the per-unit price BEFORE VAT, in pounds as a number (no currency symbol).
 - vatRate is the VAT percentage as a number (e.g. 20 for 20%). Null if not shown.
 - Dates must be ISO format (YYYY-MM-DD). Null if not present.

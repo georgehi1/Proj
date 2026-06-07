@@ -2,9 +2,10 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Homefix CRM",
+  title: "Homefix Renovations",
   description:
-    "Job management, invoicing and client communication for Homefix Limited",
+    "Job management, invoicing and client communication for Homefix Renovations",
+  icons: { icon: "/logo-mark.svg" },
 };
 
 export const viewport: Viewport = {

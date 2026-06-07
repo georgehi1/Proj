@@ -1,16 +1,18 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand-50: #eef5ff;
-  --color-brand-100: #d9e8ff;
-  --color-brand-200: #bcd6ff;
-  --color-brand-300: #8ebcff;
-  --color-brand-400: #5996ff;
-  --color-brand-500: #2f6fef;
-  --color-brand-600: #1d54d6;
-  --color-brand-700: #1842ac;
-  --color-brand-800: #1a3a8a;
-  --color-brand-900: #1b346f;
+  /* Homefix Renovations brand — lime green (logo), tuned darker at 600/700 so
+     white text on primary buttons stays legible. */
+  --color-brand-50: #f4f9ea;
+  --color-brand-100: #e6f2cb;
+  --color-brand-200: #cfe69d;
+  --color-brand-300: #b3d76c;
+  --color-brand-400: #99c948;
+  --color-brand-500: #80b431;
+  --color-brand-600: #5f8a22;
+  --color-brand-700: #4d7019;
+  --color-brand-800: #3e5a17;
+  --color-brand-900: #344b18;
 }
 
 html {

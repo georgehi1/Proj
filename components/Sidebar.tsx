@@ -30,7 +30,7 @@ export function Sidebar({
 
   return (
     <SidebarNav
-      brandTitle="Homefix CRM"
+      brandTitle="Homefix Renovations"
       brandSubtitle="Leatherhead, Surrey"
       items={items}
       userName={userName}

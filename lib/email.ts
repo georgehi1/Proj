@@ -6,7 +6,7 @@
 // caller still records the communication and updates state as if sent.
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const EMAIL_FROM = process.env.EMAIL_FROM || "Homefix Limited <onboarding@resend.dev>";
+const EMAIL_FROM = process.env.EMAIL_FROM || "Homefix Renovations <onboarding@resend.dev>";
 
 export const emailConfigured = Boolean(RESEND_API_KEY);
 
