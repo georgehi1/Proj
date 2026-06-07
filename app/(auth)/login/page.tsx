@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { LoginForm } from "./LoginForm";
-import { LogoLockup } from "@/components/Logo";
+import { BrandLogo, LogoLockup } from "@/components/Logo";
 
 export default async function LoginPage() {
   const session = await auth();
@@ -12,7 +12,7 @@ export default async function LoginPage() {
       <div className="w-full max-w-sm">
         <div className="mb-6 text-center">
           <div className="mb-3 flex justify-center">
-            <LogoLockup />
+            <BrandLogo imgClassName="mx-auto h-16 w-auto" fallback={<LogoLockup />} />
           </div>
           <p className="mt-1 text-sm text-slate-500">Sign in to continue</p>
         </div>

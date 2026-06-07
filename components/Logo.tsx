@@ -1,9 +1,14 @@
+"use client";
+
+import { useState } from "react";
+
 // Homefix Renovations logo.
 //
-// This is an SVG recreation of the brand mark (house roof + window) that
-// inherits `currentColor`, so it recolours with the brand theme. To use the
-// exact supplied artwork instead, drop the file at `public/logo.png` and swap
-// the markup below for `<img src="/logo.png" alt="Homefix Renovations" />`.
+// `BrandLogo` shows your real artwork from /public the moment you add it, and
+// falls back to an on-brand SVG recreation until then — no code change needed:
+//   • full logo  → save as  public/logo.png        (used on the login screen)
+//   • icon mark   → save as  public/logo-mark.png   (used in the sidebar)
+// PNG/JPG/SVG all work; just match the filename.
 
 export function LogoMark({ className = "" }: { className?: string }) {
   return (
@@ -34,17 +39,44 @@ export function LogoMark({ className = "" }: { className?: string }) {
   );
 }
 
-/** Full horizontal lockup: mark + "Homefix Renovations" wordmark. */
+/** SVG fallback lockup: mark + "Homefix Renovations" wordmark. */
 export function LogoLockup({ className = "" }: { className?: string }) {
   return (
     <span className={`inline-flex items-center gap-2.5 ${className}`}>
       <LogoMark className="h-9 w-9 text-brand-600" />
       <span className="leading-none">
         <span className="text-xl font-bold tracking-tight text-slate-700">Homefix</span>{" "}
-        <span className="text-xl italic text-brand-600" style={{ fontFamily: "'Brush Script MT', cursive" }}>
+        <span
+          className="text-xl italic text-brand-600"
+          style={{ fontFamily: "'Brush Script MT', cursive" }}
+        >
           Renovations
         </span>
       </span>
     </span>
+  );
+}
+
+/**
+ * Renders the image at `src` if it exists, otherwise `fallback`. Lets us ship
+ * the SVG recreation today and have the real file picked up automatically once
+ * it's dropped into /public.
+ */
+export function BrandLogo({
+  src = "/logo.png",
+  alt = "Homefix Renovations",
+  imgClassName = "",
+  fallback,
+}: {
+  src?: string;
+  alt?: string;
+  imgClassName?: string;
+  fallback: React.ReactNode;
+}) {
+  const [failed, setFailed] = useState(false);
+  if (failed) return <>{fallback}</>;
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={src} alt={alt} className={imgClassName} onError={() => setFailed(true)} />
   );
 }
