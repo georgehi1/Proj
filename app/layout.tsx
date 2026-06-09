@@ -3,8 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Homefix Renovations",
-  description:
-    "Job management, invoicing and client communication for Homefix Renovations",
+  description: "Job management and invoicing for Homefix Renovations",
   icons: { icon: "/logo-mark.svg" },
 };
 

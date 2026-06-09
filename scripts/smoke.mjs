@@ -103,18 +103,7 @@ for (const path of [
   assert(r.status === 200, `${path} renders`);
 }
 
-// 5b. Calendar renders in all three views
-{
-  const monthName = new Date().toLocaleString("en-GB", { month: "long" });
-  const month = await (await admin.req("/calendar")).text();
-  assert(month.includes(monthName), `/calendar (month) shows ${monthName}`);
-  const week = await admin.req("/calendar?view=week");
-  assert(week.status === 200 && (await week.text()).includes("Unscheduled"), "/calendar week view renders");
-  const day = await admin.req("/calendar?view=day");
-  assert(day.status === 200, "/calendar day view renders");
-}
-
-// 5c. A job detail page shows assigned contractors
+// 5b. A job detail page shows assigned contractors
 {
   const jobsHtml = await (await admin.req("/jobs")).text();
   const m = jobsHtml.match(/\/jobs\/(c[a-z0-9]{20,})"/);
@@ -159,7 +148,7 @@ console.log("\n— Authorization (contractor confinement) —");
   assert(cAtt.status === 404, `contractor blocked from attachment route (${cAtt.status})`);
 
   // Office pages redirect a contractor away (no office data served).
-  for (const path of ["/clients", "/invoices", "/contractors", "/settings", "/shopping"]) {
+  for (const path of ["/clients", "/invoices", "/contractors", "/settings"]) {
     const r = await contractor.req(path);
     assert(
       [302, 303, 307].includes(r.status),

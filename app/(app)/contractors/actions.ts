@@ -81,7 +81,6 @@ export async function addAvailability(
     },
   });
   revalidatePath(`/contractors/${contractorId}`);
-  revalidatePath("/calendar");
   return { ok: true, id: contractorId };
 }
 
@@ -89,7 +88,6 @@ export async function deleteAvailability(id: string) {
   await requireRole("ADMIN", "STAFF");
   const window = await prisma.contractorAvailability.delete({ where: { id } });
   revalidatePath(`/contractors/${window.contractorId}`);
-  revalidatePath("/calendar");
 }
 
 // ─── Contractor portal login (admin only) ──────────────────────────────────

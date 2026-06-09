@@ -144,7 +144,7 @@ export async function convertQuoteToInvoice(quoteId: string): Promise<SaveResult
 }
 
 export async function sendInvoiceEmail(id: string): Promise<SaveResult> {
-  const user = await requireRole("ADMIN", "STAFF");
+  await requireRole("ADMIN", "STAFF");
 
   const invoice = await prisma.invoice.findUnique({
     where: { id },
@@ -184,16 +184,7 @@ export async function sendInvoiceEmail(id: string): Promise<SaveResult> {
     };
   }
 
-  // Record it against the client (and job, if linked) and advance a draft.
-  await prisma.communication.create({
-    data: {
-      clientId: invoice.clientId,
-      jobId: invoice.jobId ?? undefined,
-      type: "EMAIL",
-      body: `Emailed ${label.toLowerCase()} #${invoice.number} to ${invoice.client.email}`,
-      createdById: user.id,
-    },
-  });
+  // Advance a draft once it's been emailed.
   if (invoice.status === "DRAFT") {
     await prisma.invoice.update({ where: { id }, data: { status: "SENT" } });
   }

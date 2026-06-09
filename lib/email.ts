@@ -3,7 +3,7 @@
 // When RESEND_API_KEY is set we send via Resend's REST API (no extra
 // dependency). Otherwise we fall back to logging the message, so the send
 // flow works end-to-end in local dev and tests without a provider — the
-// caller still records the communication and updates state as if sent.
+// caller still updates invoice state as if sent.
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const EMAIL_FROM = process.env.EMAIL_FROM || "Homefix Renovations <onboarding@resend.dev>";

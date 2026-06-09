@@ -2,11 +2,10 @@ import { notFound } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { Card, CardHeader, LinkButton, PageHeader } from "@/components/ui";
 import { StatusBadge } from "@/components/StatusBadge";
-import { formatDate, toNumber } from "@/lib/format";
+import { formatDate } from "@/lib/format";
 import { requireContractor } from "@/lib/contractor";
 import { JobStatusControl } from "@/app/(app)/jobs/[id]/JobStatusControl";
 import { JobPhotos } from "@/app/(app)/jobs/[id]/JobPhotos";
-import { ContractorMaterials } from "./ContractorMaterials";
 import type { JobStatus } from "@prisma/client";
 
 // Statuses a contractor can move a job between (must mirror the server guard
@@ -30,7 +29,6 @@ export default async function ContractorJobDetail({
         orderBy: { createdAt: "asc" },
         select: { id: true, filename: true },
       },
-      materials: { orderBy: { createdAt: "asc" } },
     },
   });
   if (!job) notFound();
@@ -54,8 +52,7 @@ export default async function ContractorJobDetail({
         }
       />
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="space-y-6 lg:col-span-2">
+      <div className="space-y-6">
           <Card>
             <CardHeader title="Details" />
             <dl className="grid grid-cols-1 gap-x-6 gap-y-4 px-5 py-4 text-sm sm:grid-cols-2">
@@ -129,23 +126,6 @@ export default async function ContractorJobDetail({
             <CardHeader title={`Photos${job.photos.length ? ` (${job.photos.length})` : ""}`} />
             <JobPhotos jobId={job.id} photos={job.photos} />
           </Card>
-        </div>
-
-        <div className="space-y-6">
-          <Card>
-            <CardHeader title={`Materials${job.materials.length ? ` (${job.materials.length})` : ""}`} />
-            <ContractorMaterials
-              materials={job.materials.map((m) => ({
-                id: m.id,
-                name: m.name,
-                quantity: toNumber(m.quantity),
-                unit: m.unit,
-                status: m.status,
-                notes: m.notes,
-              }))}
-            />
-          </Card>
-        </div>
       </div>
     </div>
   );

@@ -32,7 +32,6 @@ export async function contractorAddAvailability(
   });
   revalidatePath("/my/availability");
   revalidatePath(`/contractors/${contractorId}`);
-  revalidatePath("/calendar");
   return { ok: true, id: contractorId };
 }
 
@@ -46,5 +45,4 @@ export async function contractorDeleteAvailability(id: string) {
   if (result.count === 0) throw new Error("Not authorised");
   revalidatePath("/my/availability");
   revalidatePath(`/contractors/${contractorId}`);
-  revalidatePath("/calendar");
 }

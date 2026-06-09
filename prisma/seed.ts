@@ -31,7 +31,7 @@ async function main() {
   const adminEmail = (process.env.ADMIN_EMAIL ?? "admin@homefixlimited.co.uk").toLowerCase();
   const adminPassword = process.env.ADMIN_PASSWORD ?? "password123";
   const passwordHash = await bcrypt.hash(adminPassword, 10);
-  const admin = await prisma.user.upsert({
+  await prisma.user.upsert({
     where: { email: adminEmail },
     update: {},
     create: {
@@ -164,32 +164,6 @@ async function main() {
       description: "Reported dripping mixer tap.",
       status: "ENQUIRY",
     },
-  });
-
-  // --- Communications ---
-  await prisma.communication.createMany({
-    data: [
-      {
-        clientId: smith.id,
-        jobId: bathroomJob.id,
-        type: "CALL",
-        body: "Called to confirm tile choice — going with matte grey.",
-        createdById: admin.id,
-      },
-      {
-        clientId: smith.id,
-        type: "NOTE",
-        body: "Customer happy with progress so far.",
-        createdById: admin.id,
-      },
-      {
-        clientId: acme.id,
-        jobId: guttersJob.id,
-        type: "EMAIL",
-        body: "Sent schedule of works and access requirements.",
-        createdById: admin.id,
-      },
-    ],
   });
 
   // --- Invoices / quotes ---

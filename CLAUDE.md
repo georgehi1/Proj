@@ -1,7 +1,7 @@
 # CRM — notes for Claude
 
-Small-business CRM. Features: job management, invoicing (quotes + invoices with
-VAT & PDF), and a per-client communication log.
+Small-business CRM, focused on two things: job management and invoicing
+(quotes + invoices with VAT & PDF). Clients and contractors support those.
 
 ## Stack
 Next.js 16 (App Router, Server Actions) · TypeScript · Tailwind v4 · Prisma +

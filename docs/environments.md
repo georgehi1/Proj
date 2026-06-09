@@ -56,8 +56,7 @@ Preview:
   errors are tagged (the browser can't read `VERCEL_ENV`)
 
 **Optional integrations** — `ANTHROPIC_API_KEY`, `RESEND_API_KEY` / `EMAIL_FROM`,
-`SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` / `ATTACHMENTS_BUCKET`,
-`APIFY_TOKEN` / `APIFY_SCREWFIX_ACTOR`.
+`SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` / `ATTACHMENTS_BUCKET`.
 
 Never set `SEED_DEMO` in production. After the first deploy, create the admin
 account once by running `npm run db:seed:prod` locally with the production

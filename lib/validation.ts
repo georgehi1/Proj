@@ -59,33 +59,6 @@ export const availabilitySchema = z
   });
 export type AvailabilityInput = z.infer<typeof availabilitySchema>;
 
-export const communicationSchema = z.object({
-  clientId: z.string().min(1),
-  jobId: z.string().trim().optional(),
-  type: z.enum(["CALL", "EMAIL", "NOTE", "SITE_VISIT"]),
-  body: z.string().trim().min(1, "Please enter some detail"),
-});
-export type CommunicationInput = z.infer<typeof communicationSchema>;
-
-export const materialSchema = z.object({
-  name: z.string().trim().min(1, "Name is required"),
-  quantity: z.coerce.number().min(0, "Must be 0 or more").default(1),
-  unit: z.string().trim().optional(),
-  unitCost: z.union([z.coerce.number().min(0), z.literal("")]).optional(),
-  supplier: z.string().trim().optional(),
-  sku: z.string().trim().optional(),
-  sourceUrl: z
-    .string()
-    .trim()
-    .url("Invalid URL")
-    .refine((u) => /^https?:\/\//i.test(u), "URL must start with http:// or https://")
-    .or(z.literal(""))
-    .optional(),
-  status: z.enum(["NEEDED", "ORDERED", "RECEIVED"]).default("NEEDED"),
-  notes: z.string().trim().optional(),
-});
-export type MaterialInput = z.infer<typeof materialSchema>;
-
 export const lineItemSchema = z.object({
   description: z.string().trim().min(1, "Description is required"),
   quantity: z.coerce.number().min(0, "Must be 0 or more"),

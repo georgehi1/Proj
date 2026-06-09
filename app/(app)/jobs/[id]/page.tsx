@@ -10,13 +10,11 @@ import {
 import { StatusBadge } from "@/components/StatusBadge";
 import { ConfirmButton } from "@/components/ConfirmButton";
 import { currentUser, isAdmin } from "@/lib/session";
-import { formatCurrency, formatDate, formatDateTime, toNumber } from "@/lib/format";
+import { formatCurrency, formatDate } from "@/lib/format";
 import { deleteJob } from "../actions";
 import { JobStatusControl } from "./JobStatusControl";
 import { JobPhotos } from "./JobPhotos";
 import { JobAttachments } from "./JobAttachments";
-import { JobMaterials } from "./JobMaterials";
-import { MaterialSearch } from "./MaterialSearch";
 
 export default async function JobDetailPage({
   params,
@@ -38,11 +36,6 @@ export default async function JobDetailPage({
       attachments: {
         orderBy: { createdAt: "asc" },
         select: { id: true, filename: true, size: true },
-      },
-      materials: { orderBy: { createdAt: "asc" } },
-      communications: {
-        orderBy: { createdAt: "desc" },
-        include: { createdBy: { select: { name: true } } },
       },
     },
   });
@@ -155,52 +148,6 @@ export default async function JobDetailPage({
           <Card>
             <CardHeader title={`Files${job.attachments.length ? ` (${job.attachments.length})` : ""}`} />
             <JobAttachments jobId={job.id} attachments={job.attachments} />
-          </Card>
-
-          <Card>
-            <CardHeader title={`Materials${job.materials.length ? ` (${job.materials.length})` : ""}`} />
-            <MaterialSearch jobId={job.id} />
-            <JobMaterials
-              jobId={job.id}
-              materials={job.materials.map((m) => ({
-                id: m.id,
-                name: m.name,
-                quantity: toNumber(m.quantity),
-                unit: m.unit,
-                unitCost: m.unitCost == null ? null : toNumber(m.unitCost),
-                supplier: m.supplier,
-                sku: m.sku,
-                sourceUrl: m.sourceUrl,
-                status: m.status,
-                notes: m.notes,
-              }))}
-            />
-          </Card>
-
-          <Card>
-            <CardHeader title="Communications" />
-            {job.communications.length === 0 ? (
-              <p className="px-5 py-6 text-sm text-slate-400">
-                No communications logged against this job. Add them from the{" "}
-                <Link href={`/clients/${job.client.id}`} className="text-brand-600 hover:underline">
-                  client page
-                </Link>
-                .
-              </p>
-            ) : (
-              <div className="divide-y divide-slate-100">
-                {job.communications.map((c) => (
-                  <div key={c.id} className="px-5 py-4">
-                    <div className="mb-1 flex items-center gap-2 text-xs text-slate-400">
-                      <StatusBadge value={c.type} />
-                      <span>{formatDateTime(c.createdAt)}</span>
-                      <span>· {c.createdBy.name}</span>
-                    </div>
-                    <p className="whitespace-pre-wrap text-sm text-slate-700">{c.body}</p>
-                  </div>
-                ))}
-              </div>
-            )}
           </Card>
         </div>
 

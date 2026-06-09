@@ -2,7 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/db";
 import { Card, CardHeader, PageHeader } from "@/components/ui";
 import { StatusBadge } from "@/components/StatusBadge";
-import { formatCurrency, formatDate, formatDateTime } from "@/lib/format";
+import { formatCurrency, formatDate } from "@/lib/format";
 
 function StatCard({
   label,
@@ -24,13 +24,7 @@ function StatCard({
 }
 
 export default async function DashboardPage() {
-  const [
-    inProgress,
-    enquiries,
-    unpaid,
-    upcomingJobs,
-    recentComms,
-  ] = await Promise.all([
+  const [inProgress, enquiries, unpaid, upcomingJobs] = await Promise.all([
     prisma.job.count({ where: { status: "IN_PROGRESS" } }),
     prisma.job.count({ where: { status: "ENQUIRY" } }),
     prisma.invoice.aggregate({
@@ -43,14 +37,6 @@ export default async function DashboardPage() {
       orderBy: { scheduledDate: "asc" },
       take: 5,
       include: { client: { select: { name: true } } },
-    }),
-    prisma.communication.findMany({
-      orderBy: { createdAt: "desc" },
-      take: 6,
-      include: {
-        client: { select: { id: true, name: true } },
-        createdBy: { select: { name: true } },
-      },
     }),
   ]);
 
@@ -71,7 +57,7 @@ export default async function DashboardPage() {
         />
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div>
         <Card>
           <CardHeader title="Upcoming scheduled jobs" />
           {upcomingJobs.length === 0 ? (
@@ -93,28 +79,6 @@ export default async function DashboardPage() {
                       <StatusBadge value={j.status} />
                     </span>
                   </Link>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-
-        <Card>
-          <CardHeader title="Recent communications" />
-          {recentComms.length === 0 ? (
-            <p className="px-5 py-6 text-sm text-slate-400">No activity yet.</p>
-          ) : (
-            <ul className="divide-y divide-slate-100">
-              {recentComms.map((c) => (
-                <li key={c.id} className="px-5 py-3">
-                  <div className="mb-1 flex items-center gap-2 text-xs text-slate-400">
-                    <StatusBadge value={c.type} />
-                    <Link href={`/clients/${c.client.id}`} className="text-brand-600 hover:underline">
-                      {c.client.name}
-                    </Link>
-                    <span>· {formatDateTime(c.createdAt)}</span>
-                  </div>
-                  <p className="line-clamp-2 text-sm text-slate-600">{c.body}</p>
                 </li>
               ))}
             </ul>
