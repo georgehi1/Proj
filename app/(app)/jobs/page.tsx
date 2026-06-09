@@ -59,7 +59,15 @@ export default async function JobsPage({
       />
 
       {jobs.length === 0 ? (
-        <EmptyState message="No jobs found." />
+        statusFilter || q ? (
+          <EmptyState message="No jobs match your search or filters." />
+        ) : (
+          <EmptyState
+            title="No jobs yet"
+            message="A job tracks one piece of work from first enquiry through to completion."
+            action={<LinkButton href="/jobs/new">Create your first job</LinkButton>}
+          />
+        )
       ) : (
         <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
           <table className="w-full min-w-[40rem] text-sm">
