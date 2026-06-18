@@ -58,7 +58,15 @@ export default async function ClientsPage({
       />
 
       {clients.length === 0 ? (
-        <EmptyState message="No clients found. Add your first client to get started." />
+        q || type ? (
+          <EmptyState message="No clients match your search or filters." />
+        ) : (
+          <EmptyState
+            title="No clients yet"
+            message="Add the people and businesses you work for. You can also import them from a spreadsheet."
+            action={<LinkButton href="/clients/new">Add your first client</LinkButton>}
+          />
+        )
       ) : (
         <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
           <table className="w-full min-w-[40rem] text-sm">

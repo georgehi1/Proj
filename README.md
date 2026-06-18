@@ -1,19 +1,15 @@
 # CRM
 
-A simple, easy-to-use CRM for a small business. It covers the three things the
-office needs day to day:
+A simple, easy-to-use CRM for a small business, focused on jobs and invoicing:
 
 - **Job management** — track work from enquiry → quoted → scheduled → in progress →
   completed, assign one or more contractors, and attach photos and files (certificates,
   plans, signed quotes).
-- **Contractors** — a profile per tradesperson (trade, rates, contact) with their full job history.
-- **Scheduling** — a month/week/day calendar of scheduled jobs, colour-coded by
-  contractor, with drag-to-reschedule and an unscheduled-jobs panel.
+- **Contractors** — a profile per tradesperson (trade, rates, contact) with their full
+  job history, availability, and an optional self-service portal login.
 - **Invoicing** — build quotes & invoices with line items and VAT, track payment
   status, and export a branded PDF. A quote can be converted into an invoice in one click.
-- **Client communication** — log calls, emails, notes and site visits against each
-  client (and optionally a specific job), and see all of a client's jobs and invoices
-  in one place.
+- **Clients** — a record per customer with their jobs and invoices in one place.
 - **Data migration** — bulk-import clients from a spreadsheet (CSV) with column
   mapping and de-duplication, and turn existing PDF/Word quotes & invoices into live
   records with AI extraction.
@@ -25,6 +21,7 @@ office needs day to day:
 - [Prisma](https://www.prisma.io) ORM + PostgreSQL
 - [Auth.js](https://authjs.dev) (NextAuth v5) — email/password sign-in
 - [@react-pdf/renderer](https://react-pdf.org) for invoice/quote PDFs
+- [Sentry](https://sentry.io) for error monitoring (optional — off until a DSN is set)
 
 ## Getting started
 
@@ -103,7 +100,7 @@ app/
   (auth)/login/          Sign-in page + action
   (app)/                 Authenticated shell (sidebar + guard)
     page.tsx             Dashboard
-    clients/             Client list / detail / forms + comms log
+    clients/             Client list / detail / forms
     jobs/                Job list / detail / forms + status control
     invoices/            Invoice & quote list / detail / forms / PDF route
     settings/            Company details used on PDFs
@@ -128,10 +125,14 @@ the migrations automatically on deploy (`vercel.json` sets the build command to
    - **Transaction pooler** (port `6543`) → `DATABASE_URL` (append
      `?pgbouncer=true&connection_limit=1`). This is what the serverless app uses.
    - **Direct connection** (port `5432`) → `DIRECT_URL`. Used only for migrations.
-2. **Import the repo into Vercel** and set these environment variables:
+2. **Import the repo into Vercel** and set these environment variables (scope
+   them to **Production** and **Preview** separately, ideally with a different
+   database and `AUTH_SECRET` per environment):
    - `DATABASE_URL` and `DIRECT_URL` (from step 1)
    - `AUTH_SECRET` (`openssl rand -base64 32`)
    - `ADMIN_EMAIL` and `ADMIN_PASSWORD` (your real first-login credentials)
+   - `NEXT_PUBLIC_APP_ENV` (`production` / `preview` — tags client-side errors)
+   - `NEXT_PUBLIC_SENTRY_DSN` (optional — enables Sentry; see below)
    - `ANTHROPIC_API_KEY` (optional — only for AI document import)
    - Leave `SEED_DEMO` unset in production.
 3. **Deploy.** The build runs `prisma migrate deploy`, creating all tables.
@@ -143,7 +144,13 @@ the migrations automatically on deploy (`vercel.json` sets the build command to
 > connection limits, but Prisma migrations need a direct connection — hence
 > `DATABASE_URL` (pooled) and `DIRECT_URL` (direct).
 
+### Environments, monitoring & Docker
+
+Dev / preview / production setup, the `APP_ENV` tag, enabling **Sentry**, and
+running the **production Docker image** (`Dockerfile` + `docker-compose.prod.yml`)
+are all documented in **[docs/environments.md](docs/environments.md)**.
+
 ## Not included yet (natural next steps)
 
-Outbound email/SMS, online card payments, a customer portal, and
-reporting/exports. (Job photo attachments and a calendar view are already built.)
+Outbound SMS, online card payments, a customer portal, and reporting/exports.
+(Job photo attachments and file uploads are already built.)

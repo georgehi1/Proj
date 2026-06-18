@@ -48,7 +48,7 @@ export async function renderInvoicePdf(
       lineTotal: toNumber(l.lineTotal),
     })),
     company: {
-      companyName: company?.companyName ?? "Homefix Limited",
+      companyName: company?.companyName ?? "Homefix Renovations",
       addressLine1: company?.addressLine1 ?? null,
       addressLine2: company?.addressLine2 ?? null,
       town: company?.town ?? null,

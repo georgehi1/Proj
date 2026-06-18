@@ -5,9 +5,8 @@ import { Card, CardHeader, LinkButton, PageHeader } from "@/components/ui";
 import { StatusBadge } from "@/components/StatusBadge";
 import { ConfirmButton } from "@/components/ConfirmButton";
 import { currentUser, isAdmin } from "@/lib/session";
-import { formatCurrency, formatDateTime, humanize } from "@/lib/format";
+import { formatCurrency, humanize } from "@/lib/format";
 import { deleteClient } from "../actions";
-import { AddCommunicationForm } from "./AddCommunicationForm";
 
 export default async function ClientDetailPage({
   params,
@@ -21,10 +20,6 @@ export default async function ClientDetailPage({
     include: {
       jobs: { orderBy: { createdAt: "desc" } },
       invoices: { orderBy: { issueDate: "desc" } },
-      communications: {
-        orderBy: { createdAt: "desc" },
-        include: { createdBy: { select: { name: true } }, job: { select: { title: true } } },
-      },
     },
   });
   if (!client) notFound();
@@ -55,7 +50,7 @@ export default async function ClientDetailPage({
               <ConfirmButton
                 action={onDelete}
                 label="Delete"
-                confirmMessage={`Delete ${client.name}? This removes their jobs, invoices and communication history.`}
+                confirmMessage={`Delete ${client.name}? This removes their jobs and invoices.`}
               />
             )}
           </div>
@@ -63,7 +58,7 @@ export default async function ClientDetailPage({
       />
 
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Left column: profile + comms */}
+        {/* Left column: profile */}
         <div className="space-y-6 lg:col-span-2">
           <Card>
             <CardHeader title="Details" />
@@ -89,33 +84,6 @@ export default async function ClientDetailPage({
                 </div>
               )}
             </dl>
-          </Card>
-
-          <Card>
-            <CardHeader title="Communication log" />
-            <AddCommunicationForm
-              clientId={client.id}
-              jobs={client.jobs.map((j) => ({ id: j.id, title: j.title }))}
-            />
-            <div className="divide-y divide-slate-100 border-t border-slate-100">
-              {client.communications.length === 0 ? (
-                <p className="px-5 py-6 text-sm text-slate-400">
-                  No communications logged yet.
-                </p>
-              ) : (
-                client.communications.map((c) => (
-                  <div key={c.id} className="px-5 py-4">
-                    <div className="mb-1 flex items-center gap-2 text-xs text-slate-400">
-                      <StatusBadge value={c.type} />
-                      <span>{formatDateTime(c.createdAt)}</span>
-                      <span>· {c.createdBy.name}</span>
-                      {c.job && <span>· {c.job.title}</span>}
-                    </div>
-                    <p className="whitespace-pre-wrap text-sm text-slate-700">{c.body}</p>
-                  </div>
-                ))
-              )}
-            </div>
           </Card>
         </div>
 

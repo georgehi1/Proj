@@ -32,22 +32,9 @@ enum JobStatus {
   CANCELLED
 }
 
-enum CommunicationType {
-  CALL
-  EMAIL
-  NOTE
-  SITE_VISIT
-}
-
 enum InvoiceType {
   QUOTE
   INVOICE
-}
-
-enum MaterialStatus {
-  NEEDED
-  ORDERED
-  RECEIVED
 }
 
 enum InvoiceStatus {
@@ -69,7 +56,6 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  communications      Communication[] @relation("CommunicationAuthor")
   uploadedAttachments JobAttachment[] @relation("AttachmentUploader")
   // A CONTRACTOR-role user is the login for exactly one Contractor record.
   contractor          Contractor?     @relation("ContractorLogin")
@@ -89,9 +75,8 @@ model Client {
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
-  jobs           Job[]
-  communications Communication[]
-  invoices       Invoice[]
+  jobs     Job[]
+  invoices Invoice[]
 
   @@index([name])
 }
@@ -110,52 +95,13 @@ model Job {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  contractors    Contractor[]    @relation("JobContractors")
-  communications Communication[]
-  invoices       Invoice[]
-  photos         JobPhoto[]
-  attachments    JobAttachment[]
-  materials      JobMaterial[]
+  contractors Contractor[]    @relation("JobContractors")
+  invoices    Invoice[]
+  photos      JobPhoto[]
+  attachments JobAttachment[]
 
   @@index([clientId])
   @@index([status])
-}
-
-// Materials required for a job — a simple procurement tracker
-// (needed -> ordered -> received) with optional cost estimates.
-model JobMaterial {
-  id        String         @id @default(cuid())
-  jobId     String
-  job       Job            @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  name      String
-  quantity  Decimal        @default(1) @db.Decimal(10, 2)
-  unit      String?
-  unitCost  Decimal?       @db.Decimal(10, 2)
-  supplier  String?
-  sku       String?
-  sourceUrl String?
-  status    MaterialStatus @default(NEEDED)
-  notes     String?
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
-
-  @@index([jobId])
-}
-
-model Communication {
-  id          String            @id @default(cuid())
-  clientId    String
-  client      Client            @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  jobId       String?
-  job         Job?              @relation(fields: [jobId], references: [id], onDelete: SetNull)
-  type        CommunicationType @default(NOTE)
-  body        String
-  createdById String
-  createdBy   User              @relation("CommunicationAuthor", fields: [createdById], references: [id])
-  createdAt   DateTime          @default(now())
-
-  @@index([clientId])
-  @@index([jobId])
 }
 
 model Invoice {

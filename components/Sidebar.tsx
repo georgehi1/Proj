@@ -4,9 +4,7 @@ import { SidebarNav, type NavItem } from "@/components/SidebarNav";
 
 const nav: Array<NavItem & { adminOnly?: boolean }> = [
   { href: "/", label: "Dashboard" },
-  { href: "/calendar", label: "Calendar" },
   { href: "/jobs", label: "Jobs" },
-  { href: "/shopping", label: "Shopping list" },
   { href: "/clients", label: "Clients" },
   { href: "/contractors", label: "Contractors" },
   { href: "/invoices", label: "Invoices & quotes" },
@@ -30,7 +28,7 @@ export function Sidebar({
 
   return (
     <SidebarNav
-      brandTitle="Homefix CRM"
+      brandTitle="Homefix Renovations"
       brandSubtitle="Leatherhead, Surrey"
       items={items}
       userName={userName}

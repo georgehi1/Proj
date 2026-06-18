@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
-import { requireUser, requireRole } from "@/lib/session";
+import { requireRole } from "@/lib/session";
 import { invoiceSchema, type InvoiceInput } from "@/lib/validation";
 import { computeTotals } from "@/lib/invoice";
 import { renderInvoicePdf } from "@/lib/pdf/render";
@@ -36,7 +36,7 @@ export async function saveInvoice(
   id: string | null,
   input: InvoiceInput
 ): Promise<SaveResult> {
-  await requireUser();
+  await requireRole("ADMIN", "STAFF");
   const parsed = invoiceSchema.safeParse(input);
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid data" };
@@ -95,7 +95,7 @@ export async function saveInvoice(
 }
 
 export async function updateInvoiceStatus(id: string, status: InvoiceStatus) {
-  await requireUser();
+  await requireRole("ADMIN", "STAFF");
   const inv = await prisma.invoice.update({ where: { id }, data: { status } });
   revalidatePath("/invoices");
   revalidatePath(`/invoices/${id}`);
@@ -104,7 +104,7 @@ export async function updateInvoiceStatus(id: string, status: InvoiceStatus) {
 
 /** Turn an accepted quote into a draft invoice, copying its line items. */
 export async function convertQuoteToInvoice(quoteId: string): Promise<SaveResult> {
-  await requireUser();
+  await requireRole("ADMIN", "STAFF");
   const quote = await prisma.invoice.findUnique({
     where: { id: quoteId },
     include: { lineItems: { orderBy: { position: "asc" } } },
@@ -144,7 +144,7 @@ export async function convertQuoteToInvoice(quoteId: string): Promise<SaveResult
 }
 
 export async function sendInvoiceEmail(id: string): Promise<SaveResult> {
-  const user = await requireUser();
+  await requireRole("ADMIN", "STAFF");
 
   const invoice = await prisma.invoice.findUnique({
     where: { id },
@@ -159,7 +159,7 @@ export async function sendInvoiceEmail(id: string): Promise<SaveResult> {
   if (!pdf) return { ok: false, error: "Could not generate the PDF." };
 
   const company = await prisma.companySettings.findUnique({ where: { id: 1 } });
-  const companyName = company?.companyName ?? "Homefix Limited";
+  const companyName = company?.companyName ?? "Homefix Renovations";
   const label = humanize(invoice.type); // "Quote" | "Invoice"
   const subject = `${label} #${invoice.number} from ${companyName}`;
   const dueLine = invoice.dueDate ? `\nDue: ${formatDate(invoice.dueDate)}` : "";
@@ -184,16 +184,7 @@ export async function sendInvoiceEmail(id: string): Promise<SaveResult> {
     };
   }
 
-  // Record it against the client (and job, if linked) and advance a draft.
-  await prisma.communication.create({
-    data: {
-      clientId: invoice.clientId,
-      jobId: invoice.jobId ?? undefined,
-      type: "EMAIL",
-      body: `Emailed ${label.toLowerCase()} #${invoice.number} to ${invoice.client.email}`,
-      createdById: user.id,
-    },
-  });
+  // Advance a draft once it's been emailed.
   if (invoice.status === "DRAFT") {
     await prisma.invoice.update({ where: { id }, data: { status: "SENT" } });
   }

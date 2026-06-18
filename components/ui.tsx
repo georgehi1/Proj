@@ -169,10 +169,20 @@ export function PageHeader({
   );
 }
 
-export function EmptyState({ message }: { message: string }) {
+export function EmptyState({
+  title,
+  message,
+  action,
+}: {
+  title?: string;
+  message: string;
+  action?: React.ReactNode;
+}) {
   return (
-    <div className="rounded-xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center text-sm text-slate-500">
-      {message}
+    <div className="rounded-xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center">
+      {title && <p className="text-base font-semibold text-slate-800">{title}</p>}
+      <p className="mx-auto mt-1 max-w-sm text-sm text-slate-500">{message}</p>
+      {action && <div className="mt-4 flex justify-center">{action}</div>}
     </div>
   );
 }

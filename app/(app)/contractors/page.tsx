@@ -17,7 +17,11 @@ export default async function ContractorsPage() {
       />
 
       {contractors.length === 0 ? (
-        <EmptyState message="No contractors yet. Add one to start assigning jobs." />
+        <EmptyState
+          title="No contractors yet"
+          message="Add the tradespeople you assign work to. You can optionally give them a login to see their own jobs."
+          action={<LinkButton href="/contractors/new">Add your first contractor</LinkButton>}
+        />
       ) : (
         <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
           <table className="w-full min-w-[40rem] text-sm">

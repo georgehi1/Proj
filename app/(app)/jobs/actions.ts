@@ -3,15 +3,13 @@
 import { randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/db";
 import { requireUser, requireRole } from "@/lib/session";
 import { assertJobAccess } from "@/lib/contractor";
-import { jobSchema, materialSchema, type JobInput, type MaterialInput } from "@/lib/validation";
+import { jobSchema, type JobInput } from "@/lib/validation";
 import { attachmentRejectReason } from "@/lib/attachments";
 import { storageEnabled, putObject, deleteObject } from "@/lib/storage";
-import { searchMaterials } from "@/lib/suppliers";
-import type { JobStatus, MaterialStatus } from "@prisma/client";
+import type { JobStatus } from "@prisma/client";
 
 export type SaveResult = { ok: boolean; id?: string; error?: string };
 
@@ -51,23 +49,9 @@ export async function saveJob(
       });
 
   revalidatePath("/jobs");
-  revalidatePath("/calendar");
   revalidatePath(`/clients/${d.clientId}`);
   if (id) revalidatePath(`/jobs/${id}`);
   return { ok: true, id: job.id };
-}
-
-/** Reschedule a job to a given day (used by the calendar drag-and-drop). */
-export async function updateJobSchedule(id: string, isoDate: string | null) {
-  await requireRole("ADMIN", "STAFF");
-  const job = await prisma.job.update({
-    where: { id },
-    data: { scheduledDate: isoDate ? new Date(isoDate) : null },
-  });
-  revalidatePath("/calendar");
-  revalidatePath("/jobs");
-  revalidatePath(`/jobs/${id}`);
-  revalidatePath(`/clients/${job.clientId}`);
 }
 
 // On-site statuses a contractor is allowed to set themselves. Office-only
@@ -201,76 +185,4 @@ export async function deleteJobAttachment(attachmentId: string) {
   const attachment = await prisma.jobAttachment.delete({ where: { id: attachmentId } });
   if (attachment.storageKey) await deleteObject(attachment.storageKey);
   revalidatePath(`/jobs/${attachment.jobId}`);
-}
-
-// ─── Materials tracker ────────────────────────────────────────────────────
-
-export async function addJobMaterial(
-  jobId: string,
-  input: MaterialInput
-): Promise<SaveResult> {
-  await requireRole("ADMIN", "STAFF");
-  const parsed = materialSchema.safeParse(input);
-  if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid data" };
-  }
-  const m = parsed.data;
-  await prisma.jobMaterial.create({
-    data: {
-      jobId,
-      name: m.name,
-      quantity: new Prisma.Decimal(m.quantity),
-      unit: m.unit || null,
-      unitCost:
-        m.unitCost === "" || m.unitCost === undefined
-          ? null
-          : new Prisma.Decimal(Number(m.unitCost).toFixed(2)),
-      supplier: m.supplier || null,
-      sku: m.sku || null,
-      sourceUrl: m.sourceUrl || null,
-      status: m.status,
-      notes: m.notes || null,
-    },
-  });
-  revalidatePath(`/jobs/${jobId}`);
-  return { ok: true, id: jobId };
-}
-
-export type MaterialSearchResult = {
-  ok: boolean;
-  live?: boolean;
-  results?: import("@/lib/suppliers").SupplierResult[];
-  error?: string;
-};
-
-export async function searchSupplierMaterials(query: string): Promise<MaterialSearchResult> {
-  await requireRole("ADMIN", "STAFF");
-  try {
-    const { results, live } = await searchMaterials(query);
-    return { ok: true, live, results };
-  } catch (e) {
-    return { ok: false, error: e instanceof Error ? e.message : "Search failed" };
-  }
-}
-
-export async function updateJobMaterialStatus(id: string, status: MaterialStatus) {
-  const user = await requireUser();
-  const existing = await prisma.jobMaterial.findUnique({
-    where: { id },
-    select: { jobId: true },
-  });
-  if (!existing) throw new Error("Not found");
-  await assertJobAccess(user, existing.jobId);
-  const material = await prisma.jobMaterial.update({
-    where: { id },
-    data: { status },
-  });
-  revalidatePath(`/jobs/${material.jobId}`);
-  revalidatePath(`/my/jobs/${material.jobId}`);
-}
-
-export async function deleteJobMaterial(id: string) {
-  await requireRole("ADMIN", "STAFF");
-  const material = await prisma.jobMaterial.delete({ where: { id } });
-  revalidatePath(`/jobs/${material.jobId}`);
 }

@@ -13,7 +13,7 @@ export default async function SettingsPage() {
       <PageHeader title="Settings" subtitle="Company details used across the app." />
       <SettingsForm
         defaults={{
-          companyName: settings?.companyName ?? "Homefix Limited",
+          companyName: settings?.companyName ?? "Homefix Renovations",
           addressLine1: settings?.addressLine1 ?? "",
           addressLine2: settings?.addressLine2 ?? "",
           town: settings?.town ?? "",

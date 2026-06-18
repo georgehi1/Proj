@@ -21,7 +21,7 @@ export function ContractorSidebar({
 }) {
   return (
     <SidebarNav
-      brandTitle="Homefix"
+      brandTitle="Homefix Renovations"
       brandSubtitle="Contractor portal"
       items={nav}
       userName={userName}

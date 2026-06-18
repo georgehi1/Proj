@@ -65,7 +65,15 @@ export default async function InvoicesPage({
       />
 
       {invoices.length === 0 ? (
-        <EmptyState message="No invoices or quotes yet." />
+        typeFilter || statusFilter ? (
+          <EmptyState message="No documents match your filters." />
+        ) : (
+          <EmptyState
+            title="No quotes or invoices yet"
+            message="Build a quote or invoice with line items and VAT, then export a branded PDF or email it to the client."
+            action={<LinkButton href="/invoices/new">Create your first document</LinkButton>}
+          />
+        )
       ) : (
         <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
           <table className="w-full min-w-[40rem] text-sm">
